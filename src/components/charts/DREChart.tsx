@@ -53,7 +53,7 @@ export default function DREChart({ data }: Props) {
     background: "var(--bg-card)",
     border: "1px solid var(--border)",
     borderRadius: 6,
-    padding: "16px",
+    padding: "clamp(12px, 3vw, 16px)",
   };
 
   return (
@@ -101,8 +101,8 @@ export default function DREChart({ data }: Props) {
         >
           Evolução — Receita vs. Resultado
         </p>
-        <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={chartData} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
+        <ResponsiveContainer width="100%" height="100%" minHeight={200} aspect={2.2}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="periodo" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis yAxisId="left" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} tick={TICK} axisLine={false} tickLine={false} />

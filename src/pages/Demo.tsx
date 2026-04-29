@@ -110,12 +110,15 @@ export default function Demo() {
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--bg-surface)" }}>
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isDemo />
+      {/* Sidebar — hidden on mobile */}
+      <div className="hidden md:flex">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isDemo />
+      </div>
 
-      <main className="flex-1 px-6 py-6 overflow-x-hidden pb-24" style={{ minWidth: 0 }}>
+      <main className="flex-1 px-4 sm:px-6 py-4 sm:py-6 overflow-x-hidden pb-32 md:pb-6" style={{ minWidth: 0 }}>
         {/* Banner demo */}
         <div
-          className="flex items-center gap-2 px-4 py-2.5 mb-5 rounded-md text-sm"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2.5 mb-4 sm:mb-5 rounded-md text-xs sm:text-sm"
           style={{
             background: "var(--gold-dim)",
             border: "1px solid rgba(200,145,42,0.18)",
@@ -126,13 +129,35 @@ export default function Demo() {
           <BarChart3 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--gold)" }} />
           <span>
             <strong style={{ color: "var(--gold)" }}>Modo demonstração</strong>
-            {" "}— dados fictícios de Empresa Demo LTDA · Jan–Dez 2024
+            <span className="hidden sm:inline"> — dados fictícios de Empresa Demo LTDA · Jan–Dez 2024</span>
           </span>
         </div>
 
+        {/* Mobile tab bar */}
+        <div
+          className="md:hidden flex gap-1 mb-4 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className="flex-shrink-0 text-xs px-3 py-1.5 rounded font-medium transition-all"
+              style={{
+                background: activeTab === t ? "var(--gold)" : "var(--bg-card)",
+                color: activeTab === t ? "#0a0a0a" : "var(--text-3)",
+                border: `1px solid ${activeTab === t ? "var(--gold)" : "var(--border)"}`,
+                fontFamily: "'Outfit', sans-serif",
+              }}
+            >
+              {TAB_LABELS[t]}
+            </button>
+          ))}
+        </div>
+
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="font-display" style={{ fontSize: "1.5rem", fontWeight: 400, color: "var(--text)" }}>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="font-display text-xl sm:text-2xl" style={{ fontWeight: 400, color: "var(--text)" }}>
             {TAB_LABELS[activeTab]}
           </h1>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
@@ -150,7 +175,7 @@ export default function Demo() {
 
       {/* CTA sticky bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 px-6 py-4"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4"
         style={{
           background: "var(--bg-card)",
           borderTop: "1px solid var(--border)",
@@ -158,18 +183,19 @@ export default function Demo() {
         }}
       >
         <div>
-          <p className="text-sm font-medium" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
+          <p className="text-xs sm:text-sm font-medium" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
             Veja seus próprios números aqui
           </p>
           <p className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
             <span style={{ textDecoration: "line-through", opacity: 0.55 }}>R$ 197</span>{" "}
-            <strong style={{ color: "var(--gold)" }}>R$ 98,60</strong> · Importação via CSV em 5 min
+            <strong style={{ color: "var(--gold)" }}>R$ 98,60</strong>
+            <span className="hidden sm:inline"> · Importação via CSV em 5 min</span>
           </p>
         </div>
         <button
           className="btn btn-gold whitespace-nowrap"
           onClick={() => navigate("/auth")}
-          style={{ padding: "10px 20px" }}
+          style={{ padding: "9px 16px" }}
         >
           Começar agora
           <ArrowRight className="w-4 h-4" />

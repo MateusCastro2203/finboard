@@ -174,7 +174,7 @@ export default function CSVImport({ companyId, onImported }: Props) {
       {/* Upload zone */}
       <div
         onClick={() => inputRef.current?.click()}
-        className="p-8 rounded-md text-center cursor-pointer transition-colors"
+        className="p-5 sm:p-8 rounded-md text-center cursor-pointer transition-colors"
         style={{ border: "1px dashed var(--border)", background: "transparent" }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold)"; (e.currentTarget as HTMLElement).style.background = "var(--gold-dim)"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}

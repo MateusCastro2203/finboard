@@ -245,7 +245,7 @@ export default function DataEntry() {
           </button>
           <div>
             <h1
-              className="font-display text-2xl"
+              className="font-display text-xl sm:text-2xl"
               style={{ color: "var(--text)", fontWeight: 400 }}
             >
               Inserir dados da empresa
@@ -279,18 +279,18 @@ export default function DataEntry() {
 
         {/* Tabs */}
         <div
-          className="flex rounded p-0.5 mb-5"
+          className="flex rounded p-0.5 mb-5 overflow-x-auto"
           style={{ background: "var(--bg-card)" }}
         >
           {([
-            { id: "csv",    icon: <Upload className="w-4 h-4" />,    label: "Importar CSV",         badge: "Recomendado" },
-            { id: "manual", icon: <PenLine className="w-4 h-4" />,   label: "DRE manual",            badge: null },
-            { id: "fluxo",  icon: <TrendingUp className="w-4 h-4" />, label: "Fluxo de Caixa",      badge: null },
+            { id: "csv",    icon: <Upload className="w-4 h-4" />,     label: "CSV",          labelFull: "Importar CSV",   badge: "Recomendado" },
+            { id: "manual", icon: <PenLine className="w-4 h-4" />,    label: "DRE",          labelFull: "DRE manual",     badge: null },
+            { id: "fluxo",  icon: <TrendingUp className="w-4 h-4" />, label: "Fluxo",        labelFull: "Fluxo de Caixa", badge: null },
           ] as const).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-medium transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded text-sm font-medium transition-all whitespace-nowrap"
               style={{
                 background: tab === t.id ? "var(--bg-card-2)" : "transparent",
                 color: tab === t.id ? "var(--text)" : "var(--text-3)",
@@ -299,8 +299,9 @@ export default function DataEntry() {
               }}
             >
               {t.icon}
-              {t.label}
-              {t.badge && <span className="text-xs font-normal" style={{ color: "var(--green)" }}>{t.badge}</span>}
+              <span className="hidden sm:inline">{t.labelFull}</span>
+              <span className="sm:hidden">{t.label}</span>
+              {t.badge && <span className="hidden sm:inline text-xs font-normal" style={{ color: "var(--green)" }}>{t.badge}</span>}
             </button>
           ))}
         </div>
@@ -308,7 +309,7 @@ export default function DataEntry() {
         {/* CSV tab */}
         {tab === "csv" && (
           <div
-            className="p-6 rounded-md"
+            className="p-4 sm:p-6 rounded-md"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           >
             {company ? (
@@ -330,7 +331,7 @@ export default function DataEntry() {
         {/* Manual tab */}
         {tab === "manual" && (
           <div
-            className="p-6 rounded-md mb-6"
+            className="p-4 sm:p-6 rounded-md mb-6"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           >
             <div className="mb-6">
@@ -427,7 +428,7 @@ export default function DataEntry() {
         {/* Fluxo de Caixa tab */}
         {tab === "fluxo" && (
           <div
-            className="p-6 rounded-md mb-6"
+            className="p-4 sm:p-6 rounded-md mb-6"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           >
             <div className="mb-6">

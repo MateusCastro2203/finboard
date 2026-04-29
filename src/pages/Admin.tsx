@@ -328,7 +328,7 @@ export default function Admin() {
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       {/* Header */}
       <div
-        className="border-b px-6 py-4 flex items-center justify-between"
+        className="border-b px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap"
         style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
       >
         <div className="flex items-center gap-3">
@@ -340,7 +340,7 @@ export default function Admin() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+          <span className="hidden sm:inline text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
             Atualizado às {lastRefresh.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
           </span>
           <button
@@ -360,7 +360,7 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -451,7 +451,9 @@ export default function Admin() {
                     color: "var(--text)",
                     fontFamily: "'Outfit', sans-serif",
                     outline: "none",
-                    width: 160,
+                    width: "100%",
+                    minWidth: 120,
+                    maxWidth: 200,
                   }}
                 />
               </div>

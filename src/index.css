@@ -49,6 +49,9 @@
 
 html { scroll-behavior: smooth; }
 
+/* Better tap responsiveness on touch devices */
+button, a, [role="button"] { touch-action: manipulation; }
+
 body {
   margin: 0;
   background-color: var(--bg);
@@ -142,15 +145,21 @@ body::after {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 10px 18px;
   border-radius: 4px;
   font-family: 'Outfit', sans-serif;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
   text-decoration: none;
+}
+@media (min-width: 640px) {
+  .btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
 }
 .btn-gold {
   background: var(--gold);

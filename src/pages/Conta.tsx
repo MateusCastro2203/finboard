@@ -58,7 +58,7 @@ function SectionCard({ icon: Icon, title, children }: {
 }) {
   return (
     <div
-      className="p-6 rounded-md"
+      className="p-4 sm:p-6 rounded-md"
       style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2 mb-5">
@@ -169,7 +169,7 @@ export default function Conta() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="font-display text-2xl" style={{ color: "var(--text)", fontWeight: 400 }}>
+            <h1 className="font-display text-xl sm:text-2xl" style={{ color: "var(--text)", fontWeight: 400 }}>
               Dados da conta
             </h1>
             <p className="text-sm mt-0.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>

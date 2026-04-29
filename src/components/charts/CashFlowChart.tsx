@@ -76,7 +76,7 @@ export default function CashFlowChart({ data }: Props) {
             <p className="text-xs mb-1" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
               {kpi.label}
             </p>
-            <p className="font-mono-data" style={{ fontSize: "1.4rem", fontWeight: 400, color: kpi.color }}>
+            <p className="font-mono-data" style={{ fontSize: "clamp(1rem, 3.5vw, 1.4rem)", fontWeight: 400, color: kpi.color }}>
               {formatBRL(kpi.value)}
             </p>
           </div>
@@ -91,8 +91,8 @@ export default function CashFlowChart({ data }: Props) {
         >
           Entradas vs. Saídas por Mês
         </p>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={monthly} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
+        <ResponsiveContainer width="100%" height="100%" minHeight={180} aspect={2.2}>
+          <BarChart data={monthly} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="periodo" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} tick={TICK} axisLine={false} tickLine={false} />
@@ -112,8 +112,8 @@ export default function CashFlowChart({ data }: Props) {
         >
           Geração de Caixa Mensal (FCO)
         </p>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={monthly} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
+        <ResponsiveContainer width="100%" height="100%" minHeight={140} aspect={2.8}>
+          <BarChart data={monthly} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="periodo" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} tick={TICK} axisLine={false} tickLine={false} />

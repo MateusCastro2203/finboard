@@ -77,7 +77,7 @@ export default function MarginChart({ data }: Props) {
               </p>
               <p
                 className="font-mono-data mb-3"
-                style={{ fontSize: "1.75rem", fontWeight: 400, color: "var(--text)" }}
+                style={{ fontSize: "clamp(1.25rem, 5vw, 1.75rem)", fontWeight: 400, color: "var(--text)" }}
               >
                 {formatPercent(kpi.value)}
               </p>
@@ -110,8 +110,8 @@ export default function MarginChart({ data }: Props) {
         >
           Tendência de Margem — últimos meses
         </p>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={chartData} margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
+        <ResponsiveContainer width="100%" height="100%" minHeight={200} aspect={2.2}>
+          <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="periodo" tick={TICK} axisLine={false} tickLine={false} />
             <YAxis tickFormatter={(v) => `${v.toFixed(0)}%`} tick={TICK} axisLine={false} tickLine={false} />

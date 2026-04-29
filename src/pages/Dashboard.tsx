@@ -195,7 +195,7 @@ export default function Dashboard() {
         ) : (
           /* Empty state — company exists but no data yet */
           <div
-            className="flex flex-col items-center justify-center py-24 text-center rounded-md"
+            className="flex flex-col items-center justify-center py-12 sm:py-24 text-center rounded-md"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           >
             <PlusCircle className="w-9 h-9 mb-4" style={{ color: "var(--border)" }} />

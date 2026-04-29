@@ -106,7 +106,7 @@ export default function AlertsBanner({ data }: { data: DreCalculado[] }) {
               : <TrendingDown className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
             }
             <p
-              className="flex-1 text-sm"
+              className="flex-1 text-xs sm:text-sm"
               style={{
                 color: isOk ? "var(--green)" : isDanger ? "var(--red)" : "var(--text-2)",
                 fontFamily: "'Outfit', sans-serif",

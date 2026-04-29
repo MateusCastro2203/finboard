@@ -72,7 +72,7 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
       >
         {/* Report header */}
         <div
-          className="px-6 py-5 flex items-center justify-between"
+          className="px-4 sm:px-6 py-4 sm:py-5 flex items-start justify-between gap-3 flex-wrap"
           style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-card-2)" }}
         >
           <div>
@@ -111,7 +111,7 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
           </div>
         </div>
 
-        <div className="p-6 flex flex-col gap-6">
+        <div className="p-4 sm:p-6 flex flex-col gap-5 sm:gap-6">
           {/* KPI grid */}
           <div>
             <p
@@ -164,7 +164,7 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
               >
                 Tendência — Receita e EBITDA (R$ mil)
               </p>
-              <ResponsiveContainer width="100%" height={160}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={120} aspect={2.5}>
                 <LineChart data={trendData}>
                   <XAxis dataKey="p" tick={TICK} axisLine={false} tickLine={false} />
                   <YAxis tick={TICK} tickFormatter={(v) => `${v}K`} axisLine={false} tickLine={false} />
@@ -228,7 +228,7 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
             >
               Fluxo de Caixa — Período completo
             </p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { label: "Entradas",          value: totalFluxoEntradas, color: "var(--green)" },
                 { label: "Saídas",            value: totalFluxoSaidas,   color: "var(--red)" },
