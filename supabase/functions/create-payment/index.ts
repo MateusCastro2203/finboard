@@ -61,7 +61,7 @@ serve(async (req) => {
         title: "FinBoard - Kit de KPIs Financeiros para PME",
         description: "DRE Gerencial, Análise de Margem, Fluxo de Caixa e Painel Executivo",
         quantity: 1,
-        unit_price: 98.60,
+        unit_price: 0.01, // TEMPORÁRIO - voltar para 98.60 após teste
         currency_id: "BRL",
       }],
       back_urls: {
@@ -98,7 +98,7 @@ serve(async (req) => {
       user_id: user.id,
       mp_preference_id: preference.id,
       status: "pending",
-      amount: 98.60,
+      amount: 0.01, // TEMPORÁRIO - voltar para 98.60 após teste
     }, { onConflict: "user_id" });
 
     return new Response(
