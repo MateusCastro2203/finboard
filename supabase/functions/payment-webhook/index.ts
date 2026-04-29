@@ -47,14 +47,41 @@ serve(async (req) => {
     const mpWebhookSecret = Deno.env.get("MP_WEBHOOK_SECRET");
 
     const url = new URL(req.url);
-    const topic = url.searchParams.get("topic") ?? url.searchParams.get("type");
-    const id = url.searchParams.get("id") ?? url.searchParams.get("data.id");
 
-    if (topic !== "payment" && topic !== "payment.created" && topic !== "payment.updated") {
+    // Extrair topic e id — MP usa dois formatos diferentes:
+    // Formato antigo (IPN): ?topic=payment&id=PAYMENT_ID
+    // Formato novo (Webhooks): ?type=payment&data.id=PAYMENT_ID  (ou body JSON)
+    let topic = url.searchParams.get("topic")
+      ?? url.searchParams.get("type")
+      ?? url.searchParams.get("action");
+
+    let id = url.searchParams.get("id")
+      ?? url.searchParams.get("data.id");
+
+    // Formato novo: MP pode enviar o id no corpo JSON
+    if (!id && req.method === "POST") {
+      try {
+        const body = await req.clone().json();
+        id = body?.data?.id ? String(body.data.id) : null;
+        topic = topic ?? body?.type ?? body?.action ?? null;
+      } catch { /* corpo não é JSON, ignora */ }
+    }
+
+    console.log("Webhook recebido — topic:", topic, "| id:", id);
+
+    // Aceita todos os formatos de notificação de pagamento do MP
+    const isPaymentTopic = !topic
+      || topic === "payment"
+      || topic === "payment.created"
+      || topic === "payment.updated"
+      || topic === "merchant_order";
+
+    if (!isPaymentTopic) {
+      console.log("Topic ignorado:", topic);
       return new Response("ok", { status: 200 });
     }
 
-    if (!id) return new Response("bad request", { status: 400 });
+    if (!id) return new Response("bad request: missing id", { status: 400 });
 
     // Verify Mercado Pago webhook signature when secret is configured
     if (mpWebhookSecret) {

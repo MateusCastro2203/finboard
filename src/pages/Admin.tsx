@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, TrendingUp, Clock, XCircle,
   CheckCircle2, RefreshCw, LogOut, AlertCircle, Search, ShieldOff,
+  UserCheck, UserX,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -183,6 +184,7 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "access" | "no_access" | "pending">("all");
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoadingData(true);
@@ -214,11 +216,37 @@ export default function Admin() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
-    // Aguarda profile carregar antes de verificar is_admin
     if (profile === null) return;
     if (!profile.is_admin) { navigate("/dashboard"); return; }
     fetchData();
   }, [user, profile, authLoading, navigate, fetchData]);
+
+  async function handleAction(targetUserId: string, action: "grant_access" | "revoke_access") {
+    setActionLoading(targetUserId + action);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-action`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action, target_user_id: targetUserId }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro na ação");
+      await fetchData();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   if (authLoading || (user && profile === null)) {
     return (
@@ -435,7 +463,7 @@ export default function Admin() {
             <table className="w-full text-xs" style={{ fontFamily: "'Outfit', sans-serif" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-card-2)" }}>
-                  {["Usuário", "Acesso", "Pagamento", "Valor", "ID MP", "Cadastro", "Último login"].map((h) => (
+                  {["Usuário", "Acesso", "Pagamento", "Valor", "ID MP", "Cadastro", "Último login", "Ações"].map((h) => (
                     <th key={h} className="text-left px-4 py-2.5 font-medium" style={{ color: "var(--text-3)" }}>
                       {h}
                     </th>
@@ -497,6 +525,45 @@ export default function Admin() {
                     </td>
                     <td className="px-4 py-3" style={{ color: "var(--text-3)", whiteSpace: "nowrap" }}>
                       {u.last_sign_in ? fmtDate(u.last_sign_in) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        {!u.has_access ? (
+                          <button
+                            onClick={() => handleAction(u.id, "grant_access")}
+                            disabled={actionLoading === u.id + "grant_access"}
+                            title="Liberar acesso"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded"
+                            style={{
+                              background: "var(--green-dim)",
+                              color: "var(--green)",
+                              border: "1px solid rgba(61,184,112,0.25)",
+                              fontFamily: "'Outfit', sans-serif",
+                              opacity: actionLoading === u.id + "grant_access" ? 0.5 : 1,
+                            }}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            {actionLoading === u.id + "grant_access" ? "..." : "Liberar"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleAction(u.id, "revoke_access")}
+                            disabled={actionLoading === u.id + "revoke_access"}
+                            title="Revogar acesso"
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded"
+                            style={{
+                              background: "var(--red-dim)",
+                              color: "var(--red)",
+                              border: "1px solid rgba(212,88,80,0.25)",
+                              fontFamily: "'Outfit', sans-serif",
+                              opacity: actionLoading === u.id + "revoke_access" ? 0.5 : 1,
+                            }}
+                          >
+                            <UserX className="w-3 h-3" />
+                            {actionLoading === u.id + "revoke_access" ? "..." : "Revogar"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
