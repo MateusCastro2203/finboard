@@ -64,9 +64,6 @@ serve(async (req) => {
         unit_price: 98.60,
         currency_id: "BRL",
       }],
-      payer: {
-        email: user.email,
-      },
       back_urls: {
         success: `${appUrl}/payment-success`,
         failure: `${appUrl}/payment-failure`,

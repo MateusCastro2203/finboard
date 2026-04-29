@@ -10,6 +10,7 @@ import PaymentPending from "./pages/PaymentPending";
 import Checkout from "./pages/Checkout";
 import Demo from "./pages/Demo";
 import Conta from "./pages/Conta";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ export default function App() {
           path="/conta"
           element={<ProtectedRoute><Conta /></ProtectedRoute>}
         />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
