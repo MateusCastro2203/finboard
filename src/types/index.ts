@@ -22,6 +22,7 @@ export interface Profile {
   full_name: string | null;
   company_name: string | null;
   has_access: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 

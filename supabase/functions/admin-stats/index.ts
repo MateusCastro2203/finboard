@@ -30,7 +30,7 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Autenticar e verificar se é admin
+    // Autenticar usuário pelo JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Não autorizado");
 
@@ -38,8 +38,14 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error("Token inválido");
 
-    const adminEmail = Deno.env.get("ADMIN_EMAIL");
-    if (!adminEmail || user.email !== adminEmail) {
+    // Verificar is_admin diretamente no banco (source of truth)
+    const { data: callerProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !callerProfile?.is_admin) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

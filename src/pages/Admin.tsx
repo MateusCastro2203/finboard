@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, TrendingUp, Clock, XCircle,
-  CheckCircle2, RefreshCw, LogOut, AlertCircle, Search,
+  CheckCircle2, RefreshCw, LogOut, AlertCircle, Search, ShieldOff,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -47,8 +47,6 @@ interface AdminData {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL as string;
 
 function fmt(val: number) {
   return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -177,7 +175,7 @@ function RevenueChart({ data }: { data: Record<string, number> }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Admin() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState<AdminData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -216,11 +214,44 @@ export default function Admin() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
-    if (ADMIN_EMAIL && user.email !== ADMIN_EMAIL) { navigate("/dashboard"); return; }
+    // Aguarda profile carregar antes de verificar is_admin
+    if (profile === null) return;
+    if (!profile.is_admin) { navigate("/dashboard"); return; }
     fetchData();
-  }, [user, authLoading, navigate, fetchData]);
+  }, [user, profile, authLoading, navigate, fetchData]);
 
-  if (authLoading || loadingData) {
+  if (authLoading || (user && profile === null)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full animate-spin"
+            style={{ border: "2px solid var(--border)", borderTopColor: "var(--gold)" }} />
+          <span className="text-sm" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+            Verificando permissões...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile && !profile.is_admin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <div className="text-center" style={{ maxWidth: 380 }}>
+          <ShieldOff className="w-10 h-10 mx-auto mb-4" style={{ color: "var(--red)" }} />
+          <h2 className="font-display text-xl mb-2" style={{ color: "var(--text)", fontWeight: 400 }}>Acesso negado</h2>
+          <p className="text-sm mb-5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+            Seu usuário não tem permissão de administrador.
+          </p>
+          <button onClick={() => navigate("/dashboard")} className="btn btn-gold mx-auto">
+            Voltar ao painel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <div className="flex flex-col items-center gap-3">
