@@ -13,6 +13,13 @@ declare global {
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY as string;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
+// Chave válida se existir e não for o placeholder do .env
+const MP_KEY_VALID = !!(
+  MP_PUBLIC_KEY &&
+  !MP_PUBLIC_KEY.includes("SEU-PUBLIC-KEY") &&
+  (MP_PUBLIC_KEY.startsWith("APP_USR-") || MP_PUBLIC_KEY.startsWith("TEST-"))
+);
+
 function loadMPScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (window.MercadoPago) { resolve(); return; }
@@ -33,6 +40,8 @@ export default function Checkout() {
   const [brickReady, setBrickReady] = useState(false);
   const [brickError, setBrickError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [legacyError, setLegacyError] = useState<string | null>(null);
 
   // Redireciona se já tem acesso
   useEffect(() => {
@@ -40,9 +49,33 @@ export default function Checkout() {
     if (!authLoading && profile?.has_access) navigate("/dashboard");
   }, [user, profile, authLoading, navigate]);
 
+  // Fallback: botão simples de redirect (quando public key não está configurada)
+  async function handleLegacyPay() {
+    setCreating(true);
+    setLegacyError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada. Faça login novamente.");
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-payment`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao criar pagamento");
+      if (data.already_paid) { navigate("/dashboard"); return; }
+      window.location.href = data.init_point;
+    } catch (err: any) {
+      setLegacyError(err.message);
+      setCreating(false);
+    }
+  }
+
   // Inicia o Brick assim que o container estiver no DOM
   useEffect(() => {
-    if (authLoading || !user || !MP_PUBLIC_KEY) return;
+    if (authLoading || !user || !MP_KEY_VALID) return;
 
     let pollInterval: ReturnType<typeof setInterval>;
     let destroyed = false;
@@ -228,25 +261,30 @@ export default function Checkout() {
             {/* Divider */}
             <div className="border-t mb-5" style={{ borderColor: "var(--border)" }} />
 
-            {/* Brick container */}
-            {brickError ? (
-              <div
-                className="p-4 rounded text-sm text-center"
-                style={{ color: "var(--red)", background: "var(--red-dim)", fontFamily: "'Outfit', sans-serif" }}
-              >
-                {brickError}
+            {/* Brick container ou fallback */}
+            {!MP_KEY_VALID || brickError ? (
+              /* Fallback: botão simples quando Brick não está disponível */
+              <>
+                {legacyError && (
+                  <p className="text-xs px-3 py-2 rounded mb-4"
+                    style={{ color: "var(--red)", background: "var(--red-dim)", fontFamily: "'Outfit', sans-serif" }}>
+                    {legacyError}
+                  </p>
+                )}
                 <button
-                  onClick={() => window.location.reload()}
-                  className="block mx-auto mt-2 text-xs underline"
-                  style={{ color: "var(--text-3)" }}
+                  onClick={handleLegacyPay}
+                  disabled={creating}
+                  className="btn btn-gold w-full justify-center"
+                  style={{ fontSize: "1rem", padding: "14px 24px", opacity: creating ? 0.6 : 1 }}
                 >
-                  Recarregar página
+                  {creating ? "Redirecionando..." : "Pagar com Mercado Pago"}
                 </button>
-              </div>
+              </>
             ) : (
               <>
                 {!brickReady && (
-                  <div className="flex items-center justify-center gap-2 py-10" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  <div className="flex items-center justify-center gap-2 py-10"
+                    style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
                     <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--gold)" }} />
                     <span className="text-sm">Carregando métodos de pagamento...</span>
                   </div>
