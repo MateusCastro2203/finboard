@@ -38,19 +38,21 @@ export default function Dashboard() {
 
   const lastPeriodo = dreData[dreData.length - 1]?.periodo ?? "";
 
-  // Show onboarding when user has no company yet
+  // Show onboarding only while there's no company; close it once company is loaded
   useEffect(() => {
-    if (!loading && !company && user) {
-      setShowOnboarding(true);
+    if (!loading) {
+      setShowOnboarding(!company);
     }
-  }, [loading, company, user]);
+  }, [loading, company]);
 
   async function handleCreateCompany(name: string) {
     if (!user) return;
-    await supabase
+    const { error: insertErr } = await supabase
       .from("companies")
       .insert({ user_id: user.id, name });
+    if (insertErr) throw insertErr;
     await reload();
+    setShowOnboarding(false);
   }
 
   // ── Error state ──

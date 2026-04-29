@@ -31,9 +31,14 @@ export default function OnboardingWizard({ onCreateCompany, onImport, onSkip }: 
     if (!companyName.trim()) { setError("Informe o nome da empresa."); return; }
     setCreating(true);
     setError(null);
-    await onCreateCompany(companyName.trim());
-    setCreating(false);
-    setStep(1);
+    try {
+      await onCreateCompany(companyName.trim());
+      setStep(1);
+    } catch (err: any) {
+      setError(err?.message ?? "Erro ao criar empresa. Tente novamente.");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
