@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts ─── */
+/* Cormorant · DM Mono · Outfit — loaded via index.html */
+
+/* ─── Design Tokens ─── */
+:root {
+  /* Backgrounds — cool gray */
+  --bg:          #F0F1F3;
+  --bg-surface:  #E8EAEC;
+  --bg-card:     #FAFBFC;
+  --bg-card-2:   #ECEEF0;
+
+  /* Borders */
+  --border:      #CDD0D4;
+  --border-soft: #DCE0E4;
+
+  /* Text */
+  --text:        #181A1C;
+  --text-2:      #5C6168;
+  --text-3:      #9AA0A8;
+
+  /* Gold accent */
+  --gold:        #B8811E;
+  --gold-hi:     #9A6610;
+  --gold-dim:    rgba(184, 129, 30, 0.12);
+  --gold-glow:   rgba(184, 129, 30, 0.22);
+
+  /* Financial colours */
+  --green:       #1E7A44;
+  --green-dim:   rgba(30, 122, 68, 0.10);
+  --red:         #B03028;
+  --red-dim:     rgba(176, 48, 40, 0.10);
+  --blue:        #3A6EC8;
+  --blue-dim:    rgba(58, 110, 200, 0.10);
+
+  /* Charts */
+  --chart-1: #B8811E;
+  --chart-2: #1E7A44;
+  --chart-3: #3A6EC8;
+  --chart-4: #B03028;
+  --chart-5: #7B52B8;
+}
+
+/* ─── Base Reset ─── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* ─── Typography Helpers ─── */
+.font-display {
+  font-family: 'Cormorant', Georgia, 'Times New Roman', serif;
+}
+.font-mono-data {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-feature-settings: "tnum";
+}
+.font-body {
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+/* ─── Colour Helpers ─── */
+.c-gold   { color: var(--gold); }
+.c-gold-hi{ color: var(--gold-hi); }
+.c-green  { color: var(--green); }
+.c-red    { color: var(--red); }
+.c-text   { color: var(--text); }
+.c-text-2 { color: var(--text-2); }
+.c-text-3 { color: var(--text-3); }
+
+/* ─── Surface Helpers ─── */
+.bg-surface  { background-color: var(--bg-surface); }
+.bg-card     { background-color: var(--bg-card); }
+.bg-card-2   { background-color: var(--bg-card-2); }
+.border-main { border-color: var(--border); }
+
+/* ─── Gold rule decoration ─── */
+.gold-rule {
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+}
+
+/* ─── Animations ─── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 var(--gold-glow); }
+  50%       { box-shadow: 0 0 0 8px transparent; }
+}
+
+.anim-slide-up      { animation: slideUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-fade          { animation: fadeIn  0.6s ease both; }
+.delay-1  { animation-delay: 0.08s; }
+.delay-2  { animation-delay: 0.18s; }
+.delay-3  { animation-delay: 0.30s; }
+.delay-4  { animation-delay: 0.44s; }
+.delay-5  { animation-delay: 0.60s; }
+.delay-6  { animation-delay: 0.78s; }
+
+/* ─── Button Primitives ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+}
+.btn-gold {
+  background: var(--gold);
+  color: var(--bg);
+  letter-spacing: 0.01em;
+}
+.btn-gold:hover { background: var(--gold-hi); transform: translateY(-1px); box-shadow: 0 6px 20px var(--gold-dim); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--text-2); color: var(--text); }
+.btn-outline-gold {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
+.btn-outline-gold:hover { background: var(--gold-dim); }
+
+/* ─── Card ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.card-hover {
+  transition: border-color 0.2s, background 0.2s;
+}
+.card-hover:hover {
+  border-color: var(--border);
+  background: var(--bg-card-2);
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ─── Print (Painel Executivo) ─── */
+@media print {
+  /* Reset */
+  body::after  { display: none; }
+  body         { background: #fff !important; color: #111 !important; margin: 0; }
+
+  /* Hide chrome */
+  .no-print    { display: none !important; }
+  aside, nav   { display: none !important; }
+
+  /* Full-width layout */
+  .flex.min-h-screen { display: block !important; }
+  main { padding: 16px !important; width: 100% !important; max-width: 100% !important; }
+
+  /* Page setup */
+  @page { margin: 1.5cm; size: A4 portrait; }
+
+  /* CSS variable overrides for print */
+  :root {
+    --bg:          #ffffff;
+    --bg-surface:  #f8f8f8;
+    --bg-card:     #ffffff;
+    --bg-card-2:   #f4f4f4;
+    --border:      #d0d0d0;
+    --border-soft: #e4e4e4;
+    --text:        #111111;
+    --text-2:      #444444;
+    --text-3:      #777777;
+    --gold:        #B8811E;
+    --gold-dim:    rgba(184,129,30,0.08);
+    --green:       #1E7A44;
+    --red:         #B03028;
+  }
+
+  /* Prevent page breaks inside cards */
+  .print-full { page-break-inside: avoid; }
+
+  /* ── Export templates ── */
+  /* Hide the entire app when printing a template */
+  #root > * { display: none !important; }
+
+  /* Show only the print portal */
+  #finboard-print-root {
+    display: block !important;
+    position: static !important;
+    width: 210mm;
+    background: #fff;
+  }
+
+  /* Page break helpers used by TemplateRelatorioCompleto */
+  .pdf-page-break { page-break-after: always; break-after: page; }
+  .pdf-no-break   { page-break-inside: avoid; break-inside: avoid; }
+}
+
+/* ─── Recharts overrides ─── */
+.recharts-tooltip-wrapper { outline: none; }
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border) !important;
+}
