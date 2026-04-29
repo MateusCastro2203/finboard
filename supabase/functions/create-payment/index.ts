@@ -61,7 +61,7 @@ serve(async (req) => {
         title: "FinBoard - Kit de KPIs Financeiros para PME",
         description: "DRE Gerencial, Análise de Margem, Fluxo de Caixa e Painel Executivo",
         quantity: 1,
-        unit_price: 0.01, // TEMPORÁRIO - voltar para 98.60 após teste
+        unit_price: 98.60,
         currency_id: "BRL",
       }],
       back_urls: {
@@ -69,7 +69,7 @@ serve(async (req) => {
         failure: `${appUrl}/payment-failure`,
         pending: `${appUrl}/payment-pending`,
       },
-      ...(appUrl.startsWith("https://") ? { auto_return: "approved" } : {}),
+      auto_return: "all", // redireciona automaticamente para back_urls em todos os casos
       external_reference: user.id,
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/payment-webhook`,
       statement_descriptor: "FINBOARD",
@@ -98,7 +98,7 @@ serve(async (req) => {
       user_id: user.id,
       mp_preference_id: preference.id,
       status: "pending",
-      amount: 0.01, // TEMPORÁRIO - voltar para 98.60 após teste
+      amount: 98.60,
     }, { onConflict: "user_id" });
 
     return new Response(
