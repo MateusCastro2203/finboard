@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [checking, setChecking] = useState(true);
   const [ready, setReady] = useState(false);
 
+  const mpStatus = params.get("status") ?? params.get("collection_status");
+  const paymentId = params.get("payment_id") ?? params.get("collection_id");
+
   useEffect(() => {
+    // If MP already says approved in the URL, poll faster and with higher limit
+    const isApprovedByMP = mpStatus === "approved";
     let attempts = 0;
-    const MAX = 15;
+    const MAX = isApprovedByMP ? 20 : 15;
+    const INTERVAL = isApprovedByMP ? 1500 : 2000;
 
     async function checkAccess() {
       attempts++;
@@ -27,14 +34,14 @@ export default function PaymentSuccess() {
         setReady(true);
         setChecking(false);
       } else if (attempts < MAX) {
-        setTimeout(checkAccess, 2000);
+        setTimeout(checkAccess, INTERVAL);
       } else {
         setChecking(false);
       }
     }
 
     checkAccess();
-  }, []);
+  }, [mpStatus]);
 
   return (
     <div
@@ -92,6 +99,12 @@ export default function PaymentSuccess() {
             style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
           >
             Se o acesso não abrir, aguarde 1 minuto e tente novamente.
+          </p>
+        )}
+
+        {paymentId && (
+          <p className="text-xs mt-4" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+            ID do pagamento: <span style={{ color: "var(--text-2)" }}>{paymentId}</span>
           </p>
         )}
       </div>
