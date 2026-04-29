@@ -98,7 +98,16 @@ serve(async (req) => {
       headers: { "Authorization": `Bearer ${mpAccessToken}` },
     });
 
-    if (!mpResponse.ok) throw new Error("Falha ao buscar pagamento no MP");
+    // Pagamento não encontrado = notificação de teste ou ID inválido → ignora
+    if (mpResponse.status === 404) {
+      console.log("Pagamento não encontrado (provavelmente teste):", id);
+      return new Response("ok", { status: 200 });
+    }
+
+    if (!mpResponse.ok) {
+      const errText = await mpResponse.text();
+      throw new Error(`MP API error ${mpResponse.status}: ${errText}`);
+    }
 
     const payment = await mpResponse.json();
     const userId = payment.external_reference;
