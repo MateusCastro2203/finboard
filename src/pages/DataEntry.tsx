@@ -231,7 +231,7 @@ export default function DataEntry() {
       className="min-h-screen"
       style={{ background: "var(--bg)" }}
     >
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button

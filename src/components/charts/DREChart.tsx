@@ -75,7 +75,7 @@ export default function DREChart({ data }: Props) {
                 </p>
                 <p
                   className="font-mono-data"
-                  style={{ fontSize: "1.25rem", fontWeight: 400, color: "var(--text)" }}
+                  style={{ fontSize: "clamp(0.85rem, 4vw, 1.25rem)", fontWeight: 400, color: "var(--text)" }}
                 >
                   {formatBRL(kpi.value)}
                 </p>

@@ -398,20 +398,21 @@ export default function Landing() {
             Demo ao vivo →
           </button>
           <button className="btn btn-outline-gold text-sm" onClick={go}>
-            Começar por R$ 98,60
+            <span className="sm:hidden">Entrar</span>
+            <span className="hidden sm:inline">Começar por R$ 98,60</span>
           </button>
         </div>
       </nav>
 
       {/* ── HERO ── */}
       <section
-        className="relative flex flex-col items-center justify-center text-center px-6"
+        className="relative flex flex-col items-center justify-center text-center px-4 sm:px-6"
         style={{
           minHeight: "92vh",
           background:
             "radial-gradient(ellipse 70% 60% at 50% 0%, rgba(200,145,42,0.07) 0%, transparent 70%), var(--bg)",
-          paddingTop: "6rem",
-          paddingBottom: "5rem",
+          paddingTop: "clamp(3rem, 10vh, 6rem)",
+          paddingBottom: "clamp(2.5rem, 6vh, 5rem)",
         }}
       >
         <div className="max-w-3xl mx-auto">
@@ -476,7 +477,7 @@ export default function Landing() {
       </section>
 
       {/* ── PAIN SECTION ── */}
-      <section className="py-28 px-6" style={S.surface}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.surface}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <Label>A realidade de quem não tem controller</Label>
@@ -528,7 +529,7 @@ export default function Landing() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-28 px-6" style={S.bg}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.bg}>
         <div className="max-w-5xl mx-auto">
           <div className="mb-16">
             <Label>4 respostas que você vai ter toda semana</Label>
@@ -580,7 +581,7 @@ export default function Landing() {
       </section>
 
       {/* ── EXPORT DIFFERENTIATOR ── */}
-      <section className="py-28 px-6" style={S.surface}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.surface}>
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 mb-14 items-end">
             <div>
@@ -821,7 +822,7 @@ export default function Landing() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-28 px-6" style={S.surface}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.surface}>
         <div className="max-w-5xl mx-auto">
           <div className="mb-16 text-center">
             <Label>Sem complicação</Label>
@@ -908,7 +909,7 @@ export default function Landing() {
 
       {/* ── TESTIMONIALS ── */}
       <section
-        className="py-28 px-6"
+        className="py-12 sm:py-20 md:py-28 px-4 sm:px-6"
         style={{
           background:
             "radial-gradient(ellipse 80% 50% at 50% 50%, rgba(200,145,42,0.04) 0%, transparent 70%), var(--bg)",
@@ -953,7 +954,7 @@ export default function Landing() {
 
       {/* ── DEMO CTA ── */}
       <section
-        className="py-20 px-6"
+        className="py-10 sm:py-16 md:py-20 px-4 sm:px-6"
         style={{
           background:
             "radial-gradient(ellipse 60% 60% at 50% 50%, rgba(200,145,42,0.05) 0%, transparent 70%), var(--bg)",
@@ -994,7 +995,7 @@ export default function Landing() {
       </section>
 
       {/* ── PRICING ── */}
-      <section className="py-28 px-6" style={S.surface}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.surface}>
         <div className="max-w-lg mx-auto text-center">
           <Label>Investimento</Label>
           <h2
@@ -1080,7 +1081,7 @@ export default function Landing() {
       </section>
 
       {/* ── FAQ ── */}
-      <section className="py-28 px-6" style={S.bg}>
+      <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.bg}>
         <div className="max-w-2xl mx-auto">
           <div className="mb-12">
             <Label>Dúvidas</Label>
@@ -1150,7 +1151,7 @@ export default function Landing() {
 
       {/* ── FINAL CTA ── */}
       <section
-        className="py-32 px-6 text-center"
+        className="py-14 sm:py-24 md:py-32 px-4 sm:px-6 text-center"
         style={{
           background:
             "radial-gradient(ellipse 60% 80% at 50% 100%, rgba(200,145,42,0.06) 0%, transparent 70%), var(--bg-surface)",

@@ -181,114 +181,134 @@ export default function ExportModal({ open, onClose, dreData, fluxoData, company
           </div>
 
           {/* Body — scrollable */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px" }} className="sm:p-6">
             {tab === "pdf" ? (
-              <div style={{ display: "flex", gap: 24 }}>
-                {/* Left: template picker */}
-                <div style={{ flexShrink: 0, width: 160 }}>
-                  <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
+              <>
+                {/* ── MOBILE: selector horizontal + botão direto ── */}
+                <div className="md:hidden">
+                  {/* Chips de template com scroll horizontal */}
+                  <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'Outfit', sans-serif" }}>
                     Modelo
                   </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div className="flex gap-2 overflow-x-auto pb-2 mb-4" style={{ scrollbarWidth: "none" }}>
                     {TEMPLATES.map((t) => {
                       const isActive = selected === t.id;
                       return (
                         <button
                           key={t.id}
                           onClick={() => setSelected(t.id)}
+                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-md"
                           style={{
-                            background: "transparent",
+                            fontSize: 12,
+                            fontFamily: "'Outfit', sans-serif",
+                            fontWeight: isActive ? 600 : 400,
+                            background: isActive ? "var(--gold-dim)" : "var(--bg-card-2)",
                             border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                            borderRadius: 6,
-                            overflow: "hidden",
+                            color: isActive ? "var(--gold)" : "var(--text-3)",
                             cursor: "pointer",
-                            position: "relative",
-                            padding: 0,
-                            textAlign: "left",
                           }}
                         >
-                          {/* Thumbnail */}
-                          <div style={{ width: 158, height: 100, overflow: "hidden", background: "#fff", position: "relative" }}>
-                            <div style={{
-                              transform: "scale(0.2)",
-                              transformOrigin: "top left",
-                              width: A4,
-                              height: 500,
-                              pointerEvents: "none",
-                              userSelect: "none",
-                            }}>
-                              <t.component {...templateProps} />
-                            </div>
-                          </div>
-                          {/* Label */}
-                          <div style={{
-                            padding: "7px 10px",
-                            borderTop: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                            background: isActive ? "var(--gold-dim)" : "var(--bg-card-2)",
-                          }}>
-                            <div style={{ fontSize: 11, fontWeight: 500, color: isActive ? "var(--gold)" : "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
-                              {t.label}
-                            </div>
-                            <div style={{ fontSize: 9, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", marginTop: 1 }}>
-                              {t.desc}
-                            </div>
-                          </div>
-                          {isActive && (
-                            <div style={{
-                              position: "absolute",
-                              top: 6,
-                              right: 6,
-                              width: 18,
-                              height: 18,
-                              borderRadius: "50%",
-                              background: "var(--gold)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}>
-                              <Check size={10} color="#fff" strokeWidth={3} />
-                            </div>
-                          )}
+                          {isActive && <Check size={11} style={{ color: "var(--gold)" }} />}
+                          {t.label}
                         </button>
                       );
                     })}
                   </div>
-                </div>
 
-                {/* Right: A4 preview */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                  <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
-                    Pré-visualização
-                  </p>
-                  <div style={{ flex: 1, overflow: "auto", background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border)", padding: 16 }}>
-                    {/* Clipping container at preview scale */}
-                    <div style={{ width: Math.floor(A4 * 0.6), overflow: "hidden", position: "relative", margin: "0 auto" }}>
-                      <div style={{
-                        transform: "scale(0.6)",
-                        transformOrigin: "top left",
-                        width: A4,
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      }}>
-                        <SelectedTemplate {...templateProps} />
-                      </div>
-                    </div>
+                  {/* Info do modelo selecionado */}
+                  <div style={{ padding: "12px 14px", background: "var(--bg-card-2)", borderRadius: 6, border: "1px solid var(--border)", marginBottom: 16 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", fontFamily: "'Outfit', sans-serif", marginBottom: 3 }}>
+                      {TEMPLATES.find(t => t.id === selected)?.label}
+                    </p>
+                    <p style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                      {TEMPLATES.find(t => t.id === selected)?.desc}
+                    </p>
                   </div>
 
-                  {/* Print button */}
                   <button
                     onClick={handlePrint}
-                    className="btn btn-gold"
-                    style={{ marginTop: 14, justifyContent: "center", padding: "12px 24px", fontSize: 14 }}
+                    className="btn btn-gold w-full justify-center"
+                    style={{ padding: "13px 24px", fontSize: 14 }}
                   >
                     <Download size={16} />
-                    Salvar PDF
+                    Salvar PDF — {TEMPLATES.find(t => t.id === selected)?.label}
                   </button>
                   <p style={{ textAlign: "center", fontSize: 10, color: "var(--text-3)", marginTop: 8, fontFamily: "'Outfit', sans-serif" }}>
                     Use "Salvar como PDF" no menu de impressão do navegador
                   </p>
                 </div>
-              </div>
+
+                {/* ── DESKTOP: seletor + preview lado a lado ── */}
+                <div className="hidden md:flex" style={{ gap: 24 }}>
+                  {/* Left: template picker */}
+                  <div style={{ flexShrink: 0, width: 160 }}>
+                    <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
+                      Modelo
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {TEMPLATES.map((t) => {
+                        const isActive = selected === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => setSelected(t.id)}
+                            style={{
+                              background: "transparent",
+                              border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
+                              borderRadius: 6,
+                              overflow: "hidden",
+                              cursor: "pointer",
+                              position: "relative",
+                              padding: 0,
+                              textAlign: "left",
+                            }}
+                          >
+                            <div style={{ width: 158, height: 100, overflow: "hidden", background: "#fff", position: "relative" }}>
+                              <div style={{ transform: "scale(0.2)", transformOrigin: "top left", width: A4, height: 500, pointerEvents: "none", userSelect: "none" }}>
+                                <t.component {...templateProps} />
+                              </div>
+                            </div>
+                            <div style={{ padding: "7px 10px", borderTop: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`, background: isActive ? "var(--gold-dim)" : "var(--bg-card-2)" }}>
+                              <div style={{ fontSize: 11, fontWeight: 500, color: isActive ? "var(--gold)" : "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
+                                {t.label}
+                              </div>
+                              <div style={{ fontSize: 9, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", marginTop: 1 }}>
+                                {t.desc}
+                              </div>
+                            </div>
+                            {isActive && (
+                              <div style={{ position: "absolute", top: 6, right: 6, width: 18, height: 18, borderRadius: "50%", background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <Check size={10} color="#fff" strokeWidth={3} />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right: A4 preview */}
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
+                      Pré-visualização
+                    </p>
+                    <div style={{ flex: 1, overflow: "auto", background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border)", padding: 16 }}>
+                      <div style={{ width: Math.floor(A4 * 0.6), overflow: "hidden", position: "relative", margin: "0 auto" }}>
+                        <div style={{ transform: "scale(0.6)", transformOrigin: "top left", width: A4, pointerEvents: "none", userSelect: "none" }}>
+                          <SelectedTemplate {...templateProps} />
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={handlePrint} className="btn btn-gold" style={{ marginTop: 14, justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
+                      <Download size={16} />
+                      Salvar PDF
+                    </button>
+                    <p style={{ textAlign: "center", fontSize: 10, color: "var(--text-3)", marginTop: 8, fontFamily: "'Outfit', sans-serif" }}>
+                      Use "Salvar como PDF" no menu de impressão do navegador
+                    </p>
+                  </div>
+                </div>
+              </>
             ) : (
               /* XLSX tab */
               <div style={{ maxWidth: 540 }}>

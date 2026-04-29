@@ -25,12 +25,12 @@ export default function MobileNav({ activeTab, onTabChange }: {
           <button
             key={tab}
             onClick={() => onTabChange(tab)}
-            className="flex-1 flex flex-col items-center gap-1 py-3 transition-colors"
+            className="flex-1 flex flex-col items-center gap-1 py-2.5 transition-colors"
             style={{
               color: active ? "var(--gold)" : "var(--text-3)",
               fontFamily: "'Outfit', sans-serif",
-              fontSize: "0.6rem",
-              letterSpacing: "0.04em",
+              fontSize: "0.7rem",
+              letterSpacing: "0.03em",
               borderTop: `2px solid ${active ? "var(--gold)" : "transparent"}`,
               background: active ? "var(--gold-dim)" : "transparent",
             }}
@@ -42,16 +42,16 @@ export default function MobileNav({ activeTab, onTabChange }: {
       })}
       <button
         onClick={() => navigate("/dados")}
-        className="flex-1 flex flex-col items-center gap-1 py-3"
-        style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.6rem", letterSpacing: "0.04em", borderTop: "2px solid transparent" }}
+        className="flex-1 flex flex-col items-center gap-1 py-2.5"
+        style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", letterSpacing: "0.03em", borderTop: "2px solid transparent" }}
       >
         <PlusCircle size={18} />
         Dados
       </button>
       <button
         onClick={() => navigate("/conta")}
-        className="flex-1 flex flex-col items-center gap-1 py-3"
-        style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.6rem", letterSpacing: "0.04em", borderTop: "2px solid transparent" }}
+        className="flex-1 flex flex-col items-center gap-1 py-2.5"
+        style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", letterSpacing: "0.03em", borderTop: "2px solid transparent" }}
       >
         <Settings size={18} />
         Conta
