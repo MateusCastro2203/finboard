@@ -46,24 +46,24 @@ function KpiCard({
 }) {
   return (
     <div
-      className="anim-slide-up p-4 rounded-md flex flex-col gap-1"
+      className="anim-slide-up p-2.5 sm:p-4 rounded-md flex flex-col gap-1"
       style={{
         background: "var(--bg-card-2)",
         border: "1px solid var(--border-soft)",
         animationDelay: `${delay}s`,
       }}
     >
-      <span className="text-xs font-body uppercase tracking-widest" style={S.text3}>
+      <span className="text-xs font-body uppercase tracking-widest truncate" style={S.text3}>
         {label}
       </span>
       <span
-        className="text-2xl leading-none"
-        style={{ ...S.mono, color: "var(--text)", fontWeight: 400 }}
+        className="leading-none"
+        style={{ ...S.mono, color: "var(--text)", fontWeight: 400, fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}
       >
         {value}
       </span>
       <span
-        className="text-xs font-mono-data"
+        className="text-xs font-mono-data truncate"
         style={{ color: positive ? "var(--green)" : "var(--red)" }}
       >
         {positive ? "▲" : "▼"} {delta}
@@ -139,10 +139,10 @@ function DashboardMockup() {
         <span className="text-xs font-mono-data" style={S.gold}>Nov/25</span>
       </div>
 
-      <div className="flex" style={{ minHeight: 280 }}>
-        {/* Mini sidebar */}
+      <div className="flex" style={{ minHeight: 220 }}>
+        {/* Mini sidebar — hidden on mobile */}
         <div
-          className="flex flex-col gap-1 p-3"
+          className="hidden sm:flex flex-col gap-1 p-3"
           style={{ background: "var(--bg)", borderRight: "1px solid var(--border)", width: 130 }}
         >
           <span
@@ -168,7 +168,7 @@ function DashboardMockup() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-4 flex flex-col gap-3">
+        <div className="flex-1 p-3 sm:p-4 flex flex-col gap-2 sm:gap-3">
           <div className="grid grid-cols-2 gap-2">
             <KpiCard label="Receita Líquida"   value="R$ 127K"  delta="8,4% vs mês ant."  positive />
             <KpiCard label="Lucro do Mês"       value="R$ 19,3K" delta="12,1% vs mês ant." positive delay={0.07} />
@@ -463,7 +463,7 @@ export default function Landing() {
         </div>
 
         {/* Dashboard preview */}
-        <div className="w-full max-w-3xl mx-auto mt-20 px-4">
+        <div className="w-full max-w-3xl mx-auto mt-12 sm:mt-20 px-3 sm:px-4">
           <DashboardMockup />
         </div>
 
