@@ -11,9 +11,10 @@ const navItems = [
   { tab: "executivo",  icon: Presentation,    label: "Resumo Executivo" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange }: {
+export default function Sidebar({ activeTab, onTabChange, isDemo = false }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isDemo?: boolean;
 }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -85,56 +86,60 @@ export default function Sidebar({ activeTab, onTabChange }: {
           );
         })}
 
-        <div className="pt-3 mt-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid var(--border-soft)" }}>
-          {[
-            { label: "Inserir dados",  icon: PlusCircle, path: "/dados" },
-            { label: "Dados da conta", icon: Settings,   path: "/conta" },
-          ].map(({ label, icon: Icon, path }) => (
-            <button
-              key={path}
-              onClick={() => navigate(path)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
-              style={{
-                color: "var(--text-3)",
-                fontFamily: "'Outfit', sans-serif",
-                background: "transparent",
-                borderLeft: "2px solid transparent",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-                (e.currentTarget as HTMLElement).style.background = "var(--border-soft)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
-            </button>
-          ))}
-        </div>
+        {!isDemo && (
+          <div className="pt-3 mt-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid var(--border-soft)" }}>
+            {[
+              { label: "Inserir dados",  icon: PlusCircle, path: "/dados" },
+              { label: "Dados da conta", icon: Settings,   path: "/conta" },
+            ].map(({ label, icon: Icon, path }) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
+                style={{
+                  color: "var(--text-3)",
+                  fontFamily: "'Outfit', sans-serif",
+                  background: "transparent",
+                  borderLeft: "2px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
+                  (e.currentTarget as HTMLElement).style.background = "var(--border-soft)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </nav>
 
-      {/* Sign out */}
-      <div className="px-3 py-4" style={{ borderTop: "1px solid var(--border-soft)" }}>
-        <button
-          onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
-          style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-            (e.currentTarget as HTMLElement).style.background = "var(--border-soft)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-          }}
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          Sair
-        </button>
-      </div>
+      {/* Sign out — oculto no modo demo */}
+      {!isDemo && (
+        <div className="px-3 py-4" style={{ borderTop: "1px solid var(--border-soft)" }}>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
+            style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
+              (e.currentTarget as HTMLElement).style.background = "var(--border-soft)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+            }}
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            Sair
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

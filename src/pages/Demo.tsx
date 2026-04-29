@@ -110,7 +110,7 @@ export default function Demo() {
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--bg-surface)" }}>
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isDemo />
 
       <main className="flex-1 px-6 py-6 overflow-x-hidden pb-24" style={{ minWidth: 0 }}>
         {/* Banner demo */}
