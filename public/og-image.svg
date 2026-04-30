@@ -1,61 +1,59 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"   stop-color="#0A0A0C"/>
-      <stop offset="100%" stop-color="#111115"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#0D0D10"/>
+      <stop offset="100%" stop-color="#111116"/>
     </linearGradient>
-    <linearGradient id="bar1" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#C8912A" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.2"/>
+    <linearGradient id="barA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#C8912A" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.1"/>
     </linearGradient>
-    <linearGradient id="bar2" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#C8912A" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.3"/>
+    <linearGradient id="barB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#C8912A" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.15"/>
     </linearGradient>
-    <linearGradient id="bar3" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="barC" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"   stop-color="#C8912A"/>
-      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#C8912A" stop-opacity="0.3"/>
     </linearGradient>
   </defs>
 
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
 
-  <!-- Subtle grid lines -->
-  <line x1="0" y1="158" x2="1200" y2="158" stroke="#222227" stroke-width="1"/>
-  <line x1="0" y1="315" x2="1200" y2="315" stroke="#222227" stroke-width="1"/>
-  <line x1="0" y1="472" x2="1200" y2="472" stroke="#222227" stroke-width="1"/>
+  <!-- Subtle horizontal grid -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#1E1E24" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#1E1E24" stroke-width="1"/>
 
-  <!-- Decorative bars (right side) -->
-  <rect x="720" y="390" width="52" height="182" rx="6" fill="url(#bar1)"/>
-  <rect x="796" y="310" width="52" height="262" rx="6" fill="url(#bar2)"/>
-  <rect x="872" y="220" width="52" height="352" rx="6" fill="url(#bar3)"/>
-  <rect x="948" y="280" width="52" height="292" rx="6" fill="url(#bar2)"/>
-  <rect x="1024" y="180" width="52" height="392" rx="6" fill="url(#bar3)"/>
-  <rect x="1100" y="240" width="52" height="332" rx="6" fill="url(#bar2)"/>
+  <!-- Right-side bar chart -->
+  <rect x="730" y="352" width="56" height="230" rx="5" fill="url(#barA)"/>
+  <rect x="806" y="272" width="56" height="310" rx="5" fill="url(#barB)"/>
+  <rect x="882" y="182" width="56" height="400" rx="5" fill="url(#barC)"/>
+  <rect x="958" y="242" width="56" height="340" rx="5" fill="url(#barB)"/>
+  <rect x="1034" y="152" width="56" height="430" rx="5" fill="url(#barC)"/>
+  <rect x="1110" y="212" width="56" height="370" rx="5" fill="url(#barB)"/>
 
-  <!-- Gold accent line -->
-  <rect x="80" y="282" width="3" height="66" rx="1.5" fill="#C8912A"/>
+  <!-- Left gold accent bar -->
+  <rect x="80" y="148" width="4" height="334" rx="2" fill="#C8912A" opacity="0.25"/>
+  <rect x="80" y="148" width="4" height="80"  rx="2" fill="#C8912A"/>
 
-  <!-- Wordmark -->
-  <text x="104" y="337" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="400" letter-spacing="6" fill="#C8912A">FinBoard</text>
+  <!-- Brand name (small, top) -->
+  <text x="104" y="185" font-family="Georgia,'Times New Roman',serif" font-size="28" font-weight="400" letter-spacing="4" fill="#C8912A">FinBoard</text>
 
-  <!-- Tagline -->
-  <text x="106" y="384" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="300" letter-spacing="1" fill="#7A7672">Clareza financeira para PMEs</text>
+  <!-- Main headline -->
+  <text x="104" y="278" font-family="Georgia,'Times New Roman',serif" font-size="58" font-weight="400" fill="#EDE8DF" letter-spacing="-1">Entenda se sua empresa</text>
+  <text x="104" y="346" font-family="Georgia,'Times New Roman',serif" font-size="58" font-weight="400" fill="#EDE8DF" letter-spacing="-1">está lucrando de verdade</text>
+
+  <!-- Subtext -->
+  <text x="104" y="402" font-family="'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="300" fill="#7A7672" letter-spacing="0.3">DRE · Fluxo de Caixa · Análise de Margem · Relatórios automáticos</text>
 
   <!-- Divider -->
-  <rect x="80" y="416" width="480" height="1" fill="#222227"/>
+  <rect x="104" y="432" width="520" height="1" fill="#2A2A30"/>
 
-  <!-- KPI pills -->
-  <rect x="80"  y="436" width="130" height="36" rx="4" fill="#16161A" stroke="#2A2A2F" stroke-width="1"/>
-  <text x="145" y="459" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#7A7672">DRE</text>
+  <!-- CTA button -->
+  <rect x="104" y="456" width="268" height="52" rx="5" fill="#C8912A"/>
+  <text x="238" y="488" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#0A0A0C" letter-spacing="0.3">Experimente grátis →</text>
 
-  <rect x="222" y="436" width="170" height="36" rx="4" fill="#16161A" stroke="#2A2A2F" stroke-width="1"/>
-  <text x="307" y="459" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#7A7672">Fluxo de Caixa</text>
-
-  <rect x="404" y="436" width="175" height="36" rx="4" fill="#16161A" stroke="#2A2A2F" stroke-width="1"/>
-  <text x="491" y="459" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#7A7672">Análise de Margem</text>
-
-  <!-- Bottom URL -->
-  <text x="80" y="558" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" letter-spacing="1" fill="#42403C">finboard.app.br</text>
+  <!-- URL next to CTA -->
+  <text x="392" y="488" font-family="'Helvetica Neue',Arial,sans-serif" font-size="16" fill="#42403C" letter-spacing="0.5">finboard.app.br</text>
 </svg>
