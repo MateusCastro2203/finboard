@@ -13,6 +13,7 @@ import CashFlowChart from "../components/charts/CashFlowChart";
 import ExecutivePanel from "../components/charts/ExecutivePanel";
 import BudgetChart from "../components/charts/BudgetChart";
 import OnboardingWizard from "../components/OnboardingWizard";
+import EmptyDashboard from "../components/EmptyDashboard";
 import AlertsBanner from "../components/AlertsBanner";
 import AnotacaoCard from "../components/AnotacaoCard";
 import { PlusCircle, AlertTriangle, RefreshCw, Download } from "lucide-react";
@@ -193,25 +194,7 @@ export default function Dashboard() {
             )}
           </>
         ) : (
-          /* Empty state — company exists but no data yet */
-          <div
-            className="flex flex-col items-center justify-center py-12 sm:py-24 text-center rounded-md"
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-          >
-            <PlusCircle className="w-9 h-9 mb-4" style={{ color: "var(--border)" }} />
-            <h3 className="font-display text-xl mb-2" style={{ color: "var(--text)", fontWeight: 400 }}>
-              Nenhum dado ainda
-            </h3>
-            <p className="text-sm mb-2 max-w-xs" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif" }}>
-              Importe a planilha do seu contador ou preencha os valores manualmente.
-            </p>
-            <p className="text-xs mb-6 max-w-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-              Leva menos de 5 minutos e seus gráficos aparecem na hora.
-            </p>
-            <button onClick={() => navigate("/dados")} className="btn btn-gold">
-              Inserir dados agora
-            </button>
-          </div>
+          <EmptyDashboard />
         )}
       </main>
 
