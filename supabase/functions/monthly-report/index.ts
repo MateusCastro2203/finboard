@@ -31,11 +31,12 @@ serve(async (req) => {
     const resendKey = Deno.env.get("RESEND_API_KEY")!;
     const appUrl    = Deno.env.get("APP_URL") ?? "https://finboard.com.br";
 
-    // Busca todos os usuários com acesso
+    // Busca todos os usuários com acesso e com relatório mensal ativo
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name")
-      .eq("has_access", true);
+      .eq("has_access", true)
+      .neq("email_reports", false);
 
     let sent = 0;
 
@@ -171,7 +172,7 @@ serve(async (req) => {
         method: "POST",
         headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "FinBoard <relatorio@finboard.com.br>",
+          from: "FinBoard <relatorio@finboard.app.br>",
           to: [user.email],
           subject: `FinBoard · Resumo de ${periodoLabel} — ${company.name}`,
           html,

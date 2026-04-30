@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import type { Company } from "../types";
-import { ArrowLeft, Save, Building2, User, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Building2, User, CheckCircle2, AlertCircle, Bell } from "lucide-react";
 
 const inputCls: React.CSSProperties = {
   width: "100%",
@@ -87,6 +87,7 @@ export default function Conta() {
 
   // Profile fields
   const [fullName, setFullName]             = useState("");
+  const [emailReports, setEmailReports]     = useState(true);
 
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
@@ -113,7 +114,10 @@ export default function Conta() {
   }, [user]);
 
   useEffect(() => {
-    if (profile) setFullName(profile.full_name ?? "");
+    if (profile) {
+      setFullName(profile.full_name ?? "");
+      setEmailReports((profile as any).email_reports !== false);
+    }
   }, [profile]);
 
   async function handleSave() {
@@ -126,7 +130,7 @@ export default function Conta() {
       // Save profile
       const { error: profErr } = await supabase
         .from("profiles")
-        .update({ full_name: fullName.trim() })
+        .update({ full_name: fullName.trim(), email_reports: emailReports })
         .eq("id", user.id);
       if (profErr) throw profErr;
 
@@ -298,6 +302,46 @@ export default function Conta() {
                   )}
                 </div>
               </div>
+            </div>
+          </SectionCard>
+
+          {/* Notifications section */}
+          <SectionCard icon={Bell} title="Notificações por e-mail">
+            <div
+              className="flex items-center justify-between p-4 rounded-md"
+              style={{ background: "var(--bg-card-2)", border: "1px solid var(--border)" }}
+            >
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
+                  Relatório mensal
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  Receba um resumo financeiro todo dia 5 do mês com KPIs e alertas
+                </p>
+              </div>
+              <button
+                onClick={() => setEmailReports((v) => !v)}
+                className="flex-shrink-0 ml-4 relative rounded-full transition-colors"
+                style={{
+                  width: 44,
+                  height: 24,
+                  background: emailReports ? "var(--gold)" : "var(--bg-card)",
+                  border: `1px solid ${emailReports ? "var(--gold)" : "var(--border)"}`,
+                }}
+                aria-label="Toggle relatório mensal"
+              >
+                <span
+                  className="absolute top-0.5 rounded-full transition-transform"
+                  style={{
+                    width: 20,
+                    height: 20,
+                    background: "#fff",
+                    left: 2,
+                    transform: emailReports ? "translateX(20px)" : "translateX(0)",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                  }}
+                />
+              </button>
             </div>
           </SectionCard>
 

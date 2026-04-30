@@ -4,7 +4,8 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import { useFinancialData } from "../hooks/useFinancialData";
 import CSVImport from "../components/CSVImport";
-import { ArrowLeft, Save, Building2, Upload, PenLine, TrendingUp } from "lucide-react";
+import CSVFluxoImport from "../components/CSVFluxoImport";
+import { ArrowLeft, Save, Building2, Upload, PenLine, TrendingUp, Copy } from "lucide-react";
 
 const DRE_FIELDS = [
   { key: "receita_bruta",             label: "Receita Bruta",                          hint: "Total faturado antes de descontos e impostos" },
@@ -90,14 +91,31 @@ export default function DataEntry() {
   const { company, reload } = useFinancialData(user?.id);
   const navigate = useNavigate();
   const [tab, setTab] = useState<"csv" | "manual" | "fluxo">("csv");
+  const [csvType, setCsvType] = useState<"dre" | "fluxo">("dre");
   const [periodo, setPeriodo] = useState(monthsRange(12)[11].value);
   const [values, setValues] = useState<Record<string, string>>({});
   const [fluxoValues, setFluxoValues] = useState<Record<string, string>>({});
   const [companyName, setCompanyName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [copyingPrev, setCopyingPrev] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const months = monthsRange(12);
+
+  function prevMonth(p: string): string {
+    const d = new Date(p);
+    d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
+  async function copyFromPrevMonth() {
+    if (!company) return;
+    setCopyingPrev(true);
+    const prev = prevMonth(periodo);
+    await loadPeriodoData(company.id, prev);
+    await loadFluxoData(company.id, prev);
+    setCopyingPrev(false);
+  }
 
   useEffect(() => {
     if (company) {
@@ -313,13 +331,34 @@ export default function DataEntry() {
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           >
             {company ? (
-              <CSVImport
-                companyId={company.id}
-                onImported={async () => {
-                  await reload();
-                  navigate("/dashboard");
-                }}
-              />
+              <>
+                {/* CSV sub-type toggle */}
+                <div className="flex rounded p-0.5 mb-5" style={{ background: "var(--bg-card-2)" }}>
+                  {([
+                    { id: "dre",   label: "DRE (Resultado)"   },
+                    { id: "fluxo", label: "Fluxo de Caixa"    },
+                  ] as const).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setCsvType(t.id)}
+                      className="flex-1 py-2 rounded text-sm font-medium transition-all"
+                      style={{
+                        background: csvType === t.id ? "var(--bg-card)" : "transparent",
+                        color: csvType === t.id ? "var(--text)" : "var(--text-3)",
+                        border: csvType === t.id ? "1px solid var(--border)" : "1px solid transparent",
+                        fontFamily: "'Outfit', sans-serif",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                {csvType === "dre" ? (
+                  <CSVImport companyId={company.id} onImported={async () => { await reload(); navigate("/dashboard"); }} />
+                ) : (
+                  <CSVFluxoImport companyId={company.id} onImported={async () => { await reload(); navigate("/dashboard"); }} />
+                )}
+              </>
             ) : (
               <p className="text-sm text-center py-6" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
                 Preencha o nome da empresa acima antes de importar.
@@ -341,19 +380,41 @@ export default function DataEntry() {
               >
                 Mês de referência
               </label>
-              <select
-                value={periodo}
-                onChange={(e) => setPeriodo(e.target.value)}
-                style={{ ...inputCls }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-              >
-                {months.map((m) => (
-                  <option key={m.value} value={m.value} style={{ background: "var(--bg-card)" }}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={periodo}
+                  onChange={(e) => setPeriodo(e.target.value)}
+                  style={{ ...inputCls }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                >
+                  {months.map((m) => (
+                    <option key={m.value} value={m.value} style={{ background: "var(--bg-card)" }}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                {company && (
+                  <button
+                    onClick={copyFromPrevMonth}
+                    disabled={copyingPrev}
+                    title="Copiar dados do mês anterior"
+                    className="flex items-center gap-1.5 px-3 rounded flex-shrink-0 text-xs transition-colors"
+                    style={{
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card-2)",
+                      color: "var(--text-2)",
+                      fontFamily: "'Outfit', sans-serif",
+                      opacity: copyingPrev ? 0.6 : 1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Copiar mês anterior</span>
+                    <span className="sm:hidden">Copiar</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <h2
@@ -438,19 +499,41 @@ export default function DataEntry() {
               >
                 Mês de referência
               </label>
-              <select
-                value={periodo}
-                onChange={(e) => setPeriodo(e.target.value)}
-                style={{ ...inputCls }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-              >
-                {months.map((m) => (
-                  <option key={m.value} value={m.value} style={{ background: "var(--bg-card)" }}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={periodo}
+                  onChange={(e) => setPeriodo(e.target.value)}
+                  style={{ ...inputCls }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                >
+                  {months.map((m) => (
+                    <option key={m.value} value={m.value} style={{ background: "var(--bg-card)" }}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                {company && (
+                  <button
+                    onClick={copyFromPrevMonth}
+                    disabled={copyingPrev}
+                    title="Copiar dados do mês anterior"
+                    className="flex items-center gap-1.5 px-3 rounded flex-shrink-0 text-xs transition-colors"
+                    style={{
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card-2)",
+                      color: "var(--text-2)",
+                      fontFamily: "'Outfit', sans-serif",
+                      opacity: copyingPrev ? 0.6 : 1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Copiar mês anterior</span>
+                    <span className="sm:hidden">Copiar</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <h2

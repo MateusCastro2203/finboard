@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, TrendingUp, Clock, XCircle,
   CheckCircle2, RefreshCw, LogOut, AlertCircle, Search, ShieldOff,
-  UserCheck, UserX, MessageCircle, ChevronDown, ChevronUp,
+  UserCheck, UserX, MessageCircle, ChevronDown, ChevronUp, Mail,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -519,6 +519,27 @@ export default function Admin() {
   const [filter, setFilter] = useState<"all" | "access" | "no_access" | "pending">("all");
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportResult, setReportResult]   = useState<string | null>(null);
+
+  async function triggerMonthlyReport() {
+    setSendingReport(true);
+    setReportResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/monthly-report`,
+        { headers: { "Authorization": `Bearer ${session?.access_token}`, "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY } }
+      );
+      const json = await res.json();
+      setReportResult(res.ok ? `✓ Relatório enviado para ${json.sent} usuário(s).` : `Erro: ${json.error}`);
+    } catch (e: any) {
+      setReportResult(`Erro: ${e.message}`);
+    } finally {
+      setSendingReport(false);
+      setTimeout(() => setReportResult(null), 6000);
+    }
+  }
 
   const fetchData = useCallback(async () => {
     setLoadingData(true);
@@ -726,6 +747,38 @@ export default function Admin() {
         {adminTab === "tickets" && <SacTickets />}
 
         {adminTab === "dashboard" && <>
+
+        {/* Monthly report trigger */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={triggerMonthlyReport}
+            disabled={sendingReport}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded"
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              color: "var(--text-2)",
+              fontFamily: "'Outfit', sans-serif",
+              opacity: sendingReport ? 0.6 : 1,
+            }}
+          >
+            <Mail className="w-4 h-4" style={{ color: "var(--gold)" }} />
+            {sendingReport ? "Enviando..." : "Disparar relatório mensal agora"}
+          </button>
+          {reportResult && (
+            <span
+              className="text-xs px-3 py-1.5 rounded"
+              style={{
+                background: reportResult.startsWith("✓") ? "var(--green-dim)" : "var(--red-dim)",
+                color: reportResult.startsWith("✓") ? "var(--green)" : "var(--red)",
+                fontFamily: "'Outfit', sans-serif",
+              }}
+            >
+              {reportResult}
+            </span>
+          )}
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
