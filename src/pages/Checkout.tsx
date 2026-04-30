@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { track } from "../lib/analytics";
 import { CheckCircle2, Shield } from "lucide-react";
 
 export default function Checkout() {
@@ -37,6 +38,7 @@ export default function Checkout() {
       if (!res.ok) throw new Error(data.error ?? "Erro ao criar pagamento");
       if (data.already_paid) { navigate("/dashboard"); return; }
 
+      track("Checkout");
       window.location.href = data.init_point;
     } catch (err: any) {
       setError(err.message);

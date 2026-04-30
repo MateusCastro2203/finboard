@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://api.mercadopago.com; frame-src https://www.mercadopago.com.br https://www.mercadopago.com;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://api.mercadopago.com https://plausible.io; frame-src https://www.mercadopago.com.br https://www.mercadopago.com;" />
     <title>FinBoard — Relatórios financeiros automáticos para PMEs</title>
 
     <!-- Favicon -->
@@ -26,6 +26,9 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:locale"      content="pt_BR" />
     <meta property="og:site_name"   content="FinBoard" />
+
+    <!-- Analytics -->
+    <script defer data-domain="finboard.app.br" src="https://plausible.io/js/script.js"></script>
 
     <!-- Twitter Card -->
     <meta name="twitter:card"        content="summary_large_image" />

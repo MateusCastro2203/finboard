@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { track } from "../lib/analytics";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function PaymentSuccess() {
         .single();
 
       if (profile?.has_access) {
+        track("Purchase");
         setReady(true);
         setChecking(false);
       } else if (attempts < MAX) {
