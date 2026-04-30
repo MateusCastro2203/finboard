@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, LogOut, Target, Settings } from "lucide-react";
+import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, LogOut, Target, Settings, HelpCircle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
 
@@ -89,8 +89,9 @@ export default function Sidebar({ activeTab, onTabChange, isDemo = false }: {
         {!isDemo && (
           <div className="pt-3 mt-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid var(--border-soft)" }}>
             {[
-              { label: "Inserir dados",  icon: PlusCircle, path: "/dados" },
-              { label: "Dados da conta", icon: Settings,   path: "/conta" },
+              { label: "Inserir dados",  icon: PlusCircle,  path: "/dados" },
+              { label: "Dados da conta", icon: Settings,    path: "/conta" },
+              { label: "Suporte",        icon: HelpCircle,  path: "/suporte" },
             ].map(({ label, icon: Icon, path }) => (
               <button
                 key={path}

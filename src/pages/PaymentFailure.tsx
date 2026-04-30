@@ -44,15 +44,23 @@ export default function PaymentFailure() {
           {message}
         </p>
 
-        <button
-          onClick={() => navigate("/checkout")}
-          className="btn btn-gold mx-auto"
-        >
-          Tentar novamente
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => navigate("/checkout")}
+            className="btn btn-gold"
+          >
+            Tentar novamente
+          </button>
+          <button
+            onClick={() => navigate("/suporte")}
+            className="btn btn-ghost"
+          >
+            Falar com suporte
+          </button>
+        </div>
 
         {paymentId && (
-          <p className="text-xs mt-4" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+          <p className="text-xs mt-6" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
             ID do pagamento: <span style={{ color: "var(--text-2)" }}>{paymentId}</span>
           </p>
         )}

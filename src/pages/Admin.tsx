@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, TrendingUp, Clock, XCircle,
   CheckCircle2, RefreshCw, LogOut, AlertCircle, Search, ShieldOff,
-  UserCheck, UserX,
+  UserCheck, UserX, MessageCircle, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -173,11 +173,345 @@ function RevenueChart({ data }: { data: Record<string, number> }) {
   );
 }
 
+// ─── SAC Tickets ─────────────────────────────────────────────────────────────
+
+interface SacTicket {
+  id: string;
+  user_id: string | null;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "closed";
+  admin_note: string | null;
+  created_at: string;
+}
+
+const SUBJECT_LABELS: Record<string, string> = {
+  erro:       "Erro no sistema",
+  duvida:     "Dúvida de uso",
+  financeiro: "Questão financeira",
+  melhoria:   "Sugestão de melhoria",
+  outro:      "Outro",
+};
+
+const STATUS_CFG = {
+  open:        { label: "Aberto",       color: "var(--gold)",  bg: "rgba(200,145,42,0.12)" },
+  in_progress: { label: "Em análise",   color: "var(--blue)",  bg: "var(--blue-dim)" },
+  closed:      { label: "Encerrado",    color: "var(--text-3)", bg: "var(--bg-card-2)" },
+};
+
+function SacTickets() {
+  const [tickets, setTickets] = useState<SacTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [filter, setFilter]   = useState<"all" | "open" | "in_progress" | "closed">("all");
+  const [search, setSearch]   = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [note, setNote]         = useState<Record<string, string>>({});
+
+  const fetchTickets = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    const { data, error } = await supabase
+      .from("sac_tickets")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      setFetchError(
+        error.code === "42P01"
+          ? "Tabela sac_tickets não existe. Execute o arquivo supabase/sac_schema.sql no painel do Supabase."
+          : error.message
+      );
+    } else {
+      setTickets((data as SacTicket[]) ?? []);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+  async function updateStatus(id: string, status: SacTicket["status"]) {
+    setUpdating(id);
+    await supabase
+      .from("sac_tickets")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    setTickets((prev) => prev.map((t) => t.id === id ? { ...t, status } : t));
+    setUpdating(null);
+  }
+
+  async function saveNote(id: string) {
+    setUpdating(id + "note");
+    await supabase
+      .from("sac_tickets")
+      .update({ admin_note: note[id] ?? "", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    setTickets((prev) => prev.map((t) => t.id === id ? { ...t, admin_note: note[id] ?? "" } : t));
+    setUpdating(null);
+  }
+
+  const filtered = tickets.filter((t) => {
+    const matchStatus = filter === "all" || t.status === filter;
+    const q = search.toLowerCase();
+    const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.message.toLowerCase().includes(q);
+    return matchStatus && matchSearch;
+  });
+
+  const counts = {
+    open:        tickets.filter(t => t.status === "open").length,
+    in_progress: tickets.filter(t => t.status === "in_progress").length,
+    closed:      tickets.filter(t => t.status === "closed").length,
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-7 h-7 rounded-full animate-spin"
+          style={{ border: "2px solid var(--border)", borderTopColor: "var(--gold)" }} />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-16 text-center">
+        <AlertCircle className="w-8 h-8" style={{ color: "var(--red)" }} />
+        <p className="text-sm" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif", maxWidth: 420 }}>
+          {fetchError}
+        </p>
+        <button
+          onClick={fetchTickets}
+          className="text-xs px-3 py-1.5 rounded"
+          style={{
+            background: "var(--bg-card-2)",
+            border: "1px solid var(--border)",
+            color: "var(--text-2)",
+            fontFamily: "'Outfit', sans-serif",
+          }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {([
+          { key: "open",        label: "Abertos",    color: "var(--gold)" },
+          { key: "in_progress", label: "Em análise", color: "var(--blue)" },
+          { key: "closed",      label: "Encerrados", color: "var(--text-3)" },
+        ] as const).map(({ key, label, color }) => (
+          <div key={key} className="p-4 rounded-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <p className="text-xs mb-1" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>{label}</p>
+            <p className="font-mono-data text-2xl" style={{ color, fontWeight: 400 }}>{counts[key]}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters + search */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { value: "all",        label: `Todos (${tickets.length})` },
+            { value: "open",       label: "Abertos" },
+            { value: "in_progress",label: "Em análise" },
+            { value: "closed",     label: "Encerrados" },
+          ] as const).map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              className="text-xs px-3 py-1.5 rounded"
+              style={{
+                background: filter === value ? "var(--gold)" : "var(--bg-card-2)",
+                color:      filter === value ? "#0a0a0a"     : "var(--text-3)",
+                border:    `1px solid ${filter === value ? "var(--gold)" : "var(--border)"}`,
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: filter === value ? 600 : 400,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="relative sm:ml-auto">
+          <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-3)" }} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nome, e-mail..."
+            className="text-xs pl-7 pr-3 py-1.5 rounded w-full sm:w-56"
+            style={{
+              background: "var(--bg-card-2)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              fontFamily: "'Outfit', sans-serif",
+              outline: "none",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Ticket list */}
+      {filtered.length === 0 ? (
+        <div className="py-12 text-center rounded-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <MessageCircle className="w-8 h-8 mx-auto mb-3" style={{ color: "var(--border)" }} />
+          <p className="text-sm" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+            Nenhum ticket encontrado.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((t) => {
+            const cfg = STATUS_CFG[t.status];
+            const isOpen = expanded === t.id;
+            return (
+              <div
+                key={t.id}
+                className="rounded-md overflow-hidden"
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+              >
+                {/* Ticket header — always visible */}
+                <button
+                  className="w-full flex items-start gap-3 px-4 py-3.5 text-left"
+                  onClick={() => setExpanded(isOpen ? null : t.id)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-medium" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
+                        {t.name}
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                        {t.email}
+                      </span>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full"
+                        style={{ color: cfg.color, background: cfg.bg, fontFamily: "'Outfit', sans-serif" }}
+                      >
+                        {cfg.label}
+                      </span>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded"
+                        style={{ color: "var(--text-3)", background: "var(--bg-card-2)", fontFamily: "'Outfit', sans-serif" }}
+                      >
+                        {SUBJECT_LABELS[t.subject] ?? t.subject}
+                      </span>
+                    </div>
+                    <p className="text-xs truncate" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif" }}>
+                      {t.message}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                      {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    {isOpen
+                      ? <ChevronUp className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+                      : <ChevronDown className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+                    }
+                  </div>
+                </button>
+
+                {/* Expanded detail */}
+                {isOpen && (
+                  <div
+                    className="px-4 pb-4 flex flex-col gap-4"
+                    style={{ borderTop: "1px solid var(--border-soft)" }}
+                  >
+                    <p
+                      className="pt-4 text-sm leading-relaxed"
+                      style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif", whiteSpace: "pre-wrap" }}
+                    >
+                      {t.message}
+                    </p>
+
+                    {/* Status actions */}
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-xs font-medium self-center" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                        Status:
+                      </span>
+                      {(["open", "in_progress", "closed"] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => updateStatus(t.id, s)}
+                          disabled={t.status === s || updating === t.id}
+                          className="text-xs px-3 py-1.5 rounded transition-all"
+                          style={{
+                            background: t.status === s ? STATUS_CFG[s].bg   : "var(--bg-card-2)",
+                            color:      t.status === s ? STATUS_CFG[s].color : "var(--text-3)",
+                            border:    `1px solid ${t.status === s ? STATUS_CFG[s].color : "var(--border)"}`,
+                            fontFamily: "'Outfit', sans-serif",
+                            opacity:    updating === t.id ? 0.5 : 1,
+                            fontWeight: t.status === s ? 600 : 400,
+                          }}
+                        >
+                          {STATUS_CFG[s].label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Admin note */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                        Nota interna
+                      </label>
+                      <textarea
+                        rows={2}
+                        defaultValue={t.admin_note ?? ""}
+                        onChange={(e) => setNote((prev) => ({ ...prev, [t.id]: e.target.value }))}
+                        placeholder="Adicione uma nota sobre este ticket..."
+                        style={{
+                          width: "100%",
+                          background: "var(--bg-card-2)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 4,
+                          padding: "8px 10px",
+                          fontSize: "0.8125rem",
+                          color: "var(--text)",
+                          fontFamily: "'Outfit', sans-serif",
+                          outline: "none",
+                          resize: "none",
+                        }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold)"; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                      />
+                      <button
+                        onClick={() => saveNote(t.id)}
+                        disabled={updating === t.id + "note"}
+                        className="text-xs px-3 py-1.5 rounded self-start"
+                        style={{
+                          background: "var(--bg-card-2)",
+                          border: "1px solid var(--border)",
+                          color: "var(--text-2)",
+                          fontFamily: "'Outfit', sans-serif",
+                          opacity: updating === t.id + "note" ? 0.5 : 1,
+                        }}
+                      >
+                        {updating === t.id + "note" ? "Salvando..." : "Salvar nota"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Admin() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [adminTab, setAdminTab] = useState<"dashboard" | "tickets">("dashboard");
   const [data, setData] = useState<AdminData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -360,8 +694,38 @@ export default function Admin() {
         </div>
       </div>
 
+      {/* Tab bar */}
+      <div
+        className="flex border-b px-4 sm:px-6"
+        style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
+      >
+        {([
+          { value: "dashboard", label: "Dashboard", icon: Users },
+          { value: "tickets",   label: "Chamados SAC", icon: MessageCircle },
+        ] as const).map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            onClick={() => setAdminTab(value)}
+            className="flex items-center gap-2 px-4 py-3 text-sm transition-colors"
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight:  adminTab === value ? 600 : 400,
+              color:       adminTab === value ? "var(--gold)" : "var(--text-3)",
+              borderBottom: adminTab === value ? "2px solid var(--gold)" : "2px solid transparent",
+              marginBottom: -1,
+            }}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
+        {adminTab === "tickets" && <SacTickets />}
+
+        {adminTab === "dashboard" && <>
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
@@ -595,6 +959,8 @@ export default function Admin() {
             </div>
           ))}
         </div>
+
+        </>}
 
       </div>
     </div>

@@ -11,7 +11,9 @@ import Checkout from "./pages/Checkout";
 import Demo from "./pages/Demo";
 import Conta from "./pages/Conta";
 import Admin from "./pages/Admin";
+import Suporte from "./pages/Suporte";
 import NotFound from "./pages/NotFound";
+import FloatingSupport from "./components/FloatingSupport";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
@@ -54,8 +56,10 @@ export default function App() {
           element={<ProtectedRoute><Conta /></ProtectedRoute>}
         />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/suporte" element={<Suporte />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <FloatingSupport />
     </BrowserRouter>
   );
 }

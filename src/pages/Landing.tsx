@@ -1149,6 +1149,32 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── SUPORTE ── */}
+      <section className="py-8 px-4 sm:px-6" style={{ background: "var(--bg-surface)" }}>
+        <div className="max-w-2xl mx-auto">
+          <div
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-md"
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+          >
+            <div>
+              <p className="font-medium text-sm mb-1" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
+                Problema com login ou pagamento?
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Não consegue acessar sua conta ou teve algum erro na compra? Nossa equipe resolve.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/suporte")}
+              className="btn btn-ghost text-sm whitespace-nowrap flex-shrink-0"
+            >
+              Falar com suporte
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section
         className="py-14 sm:py-24 md:py-32 px-4 sm:px-6 text-center"
@@ -1192,15 +1218,19 @@ export default function Landing() {
         </span>
         <span>© {new Date().getFullYear()} FinBoard. Todos os direitos reservados.</span>
         <div className="flex gap-5">
-          {["Termos de Uso", "Privacidade", "Suporte"].map((l) => (
+          {[
+            { label: "Termos de Uso", href: "#" },
+            { label: "Privacidade",   href: "#" },
+            { label: "Suporte",       href: "/suporte" },
+          ].map(({ label, href }) => (
             <a
-              key={l}
-              href="#"
+              key={label}
+              href={href}
               style={{ color: "var(--text-3)", textDecoration: "none" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-2)")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
             >
-              {l}
+              {label}
             </a>
           ))}
         </div>

@@ -184,6 +184,16 @@ export default function Auth() {
         <p className="text-center text-xs mt-4" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
           Ao criar conta, você concorda com nossos Termos de Uso e Política de Privacidade.
         </p>
+        <p className="text-center text-xs mt-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <a
+            href="/suporte"
+            style={{ color: "var(--text-3)", textDecoration: "none" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-2)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
+          >
+            Problema com acesso ou pagamento? Fale com o suporte
+          </a>
+        </p>
       </div>
     </div>
   );
