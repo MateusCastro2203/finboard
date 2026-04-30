@@ -13,6 +13,8 @@ import Conta from "./pages/Conta";
 import Admin from "./pages/Admin";
 import Suporte from "./pages/Suporte";
 import ResetPassword from "./pages/ResetPassword";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
 import FloatingSupport from "./components/FloatingSupport";
 
@@ -59,6 +61,8 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/suporte" element={<Suporte />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <FloatingSupport />

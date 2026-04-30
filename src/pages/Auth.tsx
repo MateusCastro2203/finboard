@@ -182,7 +182,10 @@ export default function Auth() {
         </div>
 
         <p className="text-center text-xs mt-4" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-          Ao criar conta, você concorda com nossos Termos de Uso e Política de Privacidade.
+          Ao criar conta, você concorda com nossos{" "}
+          <a href="/termos" style={{ color: "var(--text-2)", textDecoration: "underline", textUnderlineOffset: 3 }}>Termos de Uso</a>
+          {" "}e{" "}
+          <a href="/privacidade" style={{ color: "var(--text-2)", textDecoration: "underline", textUnderlineOffset: 3 }}>Política de Privacidade</a>.
         </p>
         <p className="text-center text-xs mt-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
           <a

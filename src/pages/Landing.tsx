@@ -1219,8 +1219,8 @@ export default function Landing() {
         <span>© {new Date().getFullYear()} FinBoard. Todos os direitos reservados.</span>
         <div className="flex gap-5">
           {[
-            { label: "Termos de Uso", href: "#" },
-            { label: "Privacidade",   href: "#" },
+            { label: "Termos de Uso", href: "/termos" },
+            { label: "Privacidade",   href: "/privacidade" },
             { label: "Suporte",       href: "/suporte" },
           ].map(({ label, href }) => (
             <a
