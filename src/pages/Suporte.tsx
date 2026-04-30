@@ -60,17 +60,17 @@ export default function Suporte() {
     setSending(true);
     setError(null);
     try {
-      const { data: ticket, error: insErr } = await supabase
+      const ticketId = crypto.randomUUID();
+      const { error: insErr } = await supabase
         .from("sac_tickets")
         .insert({
+          id:      ticketId,
           user_id: user?.id ?? null,
           name:    name.trim(),
           email:   email.trim().toLowerCase(),
           subject,
           message: message.trim(),
-        })
-        .select("id")
-        .single();
+        });
       if (insErr) throw insErr;
 
       // Fire email notification — non-blocking (UX doesn't depend on it)
@@ -79,7 +79,7 @@ export default function Suporte() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticket_id: ticket.id }),
+          body: JSON.stringify({ ticket_id: ticketId }),
         }
       ).catch(() => {});
 
