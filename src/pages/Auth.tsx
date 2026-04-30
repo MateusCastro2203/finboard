@@ -58,7 +58,7 @@ export default function Auth() {
 
     if (mode === "reset") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) { setError(error.message); setLoading(false); return; }
       setSuccess("Link enviado! Verifique seu e-mail para redefinir a senha.");

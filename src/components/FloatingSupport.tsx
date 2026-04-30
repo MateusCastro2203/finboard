@@ -26,7 +26,7 @@ const inputCls: React.CSSProperties = {
   transition: "border-color 0.15s",
 };
 
-const HIDDEN_PATHS = ["/suporte", "/admin"];
+const HIDDEN_PATHS = ["/suporte", "/admin", "/reset-password"];
 
 export default function FloatingSupport() {
   const location = useLocation();

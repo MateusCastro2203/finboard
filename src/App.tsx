@@ -12,6 +12,7 @@ import Demo from "./pages/Demo";
 import Conta from "./pages/Conta";
 import Admin from "./pages/Admin";
 import Suporte from "./pages/Suporte";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import FloatingSupport from "./components/FloatingSupport";
 
@@ -55,6 +56,7 @@ export default function App() {
           path="/conta"
           element={<ProtectedRoute><Conta /></ProtectedRoute>}
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/suporte" element={<Suporte />} />
         <Route path="*" element={<NotFound />} />
