@@ -74,17 +74,20 @@ export default function Suporte() {
       if (insErr) throw insErr;
 
       // Fire email notification — non-blocking (UX doesn't depend on it)
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
       fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-ticket`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`,
             "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({ ticket_id: ticketId }),
         }
-      ).catch(() => {});
+      ).catch((e) => console.error("notify-ticket:", e));
 
       setDone(true);
     } catch (err: any) {
