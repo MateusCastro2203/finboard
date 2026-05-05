@@ -73,6 +73,21 @@ export default function Auth() {
         options: { data: { full_name: fullName } },
       });
       if (error) { setError(error.message); setLoading(false); return; }
+
+      // Fire signup notifications — non-blocking
+      fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ name: fullName, email }),
+        }
+      ).catch((e) => console.error("notify-signup:", e));
+
       setSuccess("Conta criada! Verifique seu e-mail para confirmar antes de continuar.");
       setLoading(false);
     } else {
