@@ -200,6 +200,19 @@ body::after {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
+/* ─── Print portal — hidden on screen, shown only when printing ─── */
+#finboard-print-root {
+  display: none;
+}
+
+/* ─── Body scroll lock when a modal is open ─── */
+body.modal-open {
+  overflow: hidden;
+  /* prevent iOS bounce from revealing background */
+  position: fixed;
+  width: 100%;
+}
+
 /* ─── Print (Painel Executivo) ─── */
 @media print {
   /* Reset */

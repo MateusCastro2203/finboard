@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Download, FileText, FileSpreadsheet, Check } from "lucide-react";
 import type { DreCalculado, FluxoCaixa, Company } from "../../types";
 import { useExportData } from "./useExportData";
@@ -21,62 +22,58 @@ interface Props {
 const A4 = 794;
 
 const TEMPLATES = [
-  {
-    id: "cartao",
-    label: "Cartão Executivo",
-    desc: "1 página · KPIs grandes + síntese",
-    component: TemplateCartaoExecutivo,
-  },
-  {
-    id: "dre",
-    label: "DRE Gerencial",
-    desc: "1-2 páginas · Tabela completa",
-    component: TemplateDREGerencial,
-  },
-  {
-    id: "margens",
-    label: "Análise de Margens",
-    desc: "1 página · Evolução das margens",
-    component: TemplateAnaliseMargens,
-  },
-  {
-    id: "completo",
-    label: "Relatório Completo",
-    desc: "3 páginas · Capa + DRE + Fluxo",
-    component: TemplateRelatorioCompleto,
-  },
-  {
-    id: "fluxo",
-    label: "Fluxo de Caixa",
-    desc: "1 página · Caixa mensal",
-    component: TemplateFluxoCaixa,
-  },
+  { id: "cartao",   label: "Cartão Executivo",  desc: "1 página · KPIs grandes + síntese",    component: TemplateCartaoExecutivo   },
+  { id: "dre",      label: "DRE Gerencial",      desc: "1-2 páginas · Tabela completa",         component: TemplateDREGerencial      },
+  { id: "margens",  label: "Análise de Margens", desc: "1 página · Evolução das margens",       component: TemplateAnaliseMargens    },
+  { id: "completo", label: "Relatório Completo", desc: "3 páginas · Capa + DRE + Fluxo",        component: TemplateRelatorioCompleto },
+  { id: "fluxo",    label: "Fluxo de Caixa",     desc: "1 página · Caixa mensal",               component: TemplateFluxoCaixa        },
 ] as const;
 
 type TemplateId = typeof TEMPLATES[number]["id"];
 
 const XLSX_SHEETS = [
-  { name: "Resumo", desc: "KPIs do último período e YTD" },
-  { name: "DRE",    desc: "Todas as 16 linhas × todos os meses + YTD" },
-  { name: "Margens", desc: "Margens Bruta, EBITDA e Líquida mensais" },
+  { name: "Resumo",         desc: "KPIs do último período e YTD" },
+  { name: "DRE",            desc: "Todas as 16 linhas × todos os meses + YTD" },
+  { name: "Margens",        desc: "Margens Bruta, EBITDA e Líquida mensais" },
   { name: "Fluxo de Caixa", desc: "Entradas, Saídas, FCO e Saldo Acumulado" },
 ];
 
+/* ─── shared tokens ─── */
+const t = {
+  titleSize:     "clamp(1.25rem, 5vw, 1.5rem)",
+  bodySize:      "clamp(0.9375rem, 2.5vw, 1rem)",      /* 15–16px */
+  secondarySize: "clamp(0.8125rem, 2vw, 0.875rem)",    /* 13–14px */
+  labelSize:     "0.6875rem",                           /* 11px — ALL CAPS labels */
+  hintSize:      "clamp(0.75rem, 1.8vw, 0.8125rem)",   /* 12–13px */
+  fontBody:      "'Outfit', sans-serif",
+  gap:           "1rem",
+  radius:        "0.5rem",
+};
+
 export default function ExportModal({ open, onClose, dreData, fluxoData, company }: Props) {
-  const [tab, setTab] = useState<"pdf" | "xlsx">("pdf");
-  const [selected, setSelected] = useState<TemplateId>("cartao");
-  const [xlsxLoading, setXlsxLoading] = useState(false);
-  const [xlsxDone, setXlsxDone] = useState(false);
+  const [tab, setTab]                     = useState<"pdf" | "xlsx">("pdf");
+  const [selected, setSelected]           = useState<TemplateId>("cartao");
+  const [xlsxLoading, setXlsxLoading]     = useState(false);
+  const [xlsxDone, setXlsxDone]           = useState(false);
 
-  const exportData = useExportData(dreData, fluxoData, company);
+  const exportData      = useExportData(dreData, fluxoData, company);
+  const SelectedTemplate = TEMPLATES.find(tp => tp.id === selected)!.component;
+  const templateProps   = { dreData, fluxoData, company, exportData };
 
-  const SelectedTemplate = TEMPLATES.find(t => t.id === selected)!.component;
+  /* Lock body scroll while modal is open */
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    document.body.classList.add("modal-open");
+    document.body.style.top = `-${scrollY}px`;
+    return () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.top = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
-  const templateProps = { dreData, fluxoData, company, exportData };
-
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+  const handlePrint = useCallback(() => { window.print(); }, []);
 
   const handleXLSX = useCallback(async () => {
     setXlsxLoading(true);
@@ -84,301 +81,338 @@ export default function ExportModal({ open, onClose, dreData, fluxoData, company
       await generateXLSX(dreData, fluxoData, company, exportData.monthly);
       setXlsxDone(true);
       setTimeout(() => setXlsxDone(false), 3000);
-    } finally {
-      setXlsxLoading(false);
-    }
+    } finally { setXlsxLoading(false); }
   }, [dreData, fluxoData, company, exportData.monthly]);
 
   if (!open) return null;
 
   return (
     <>
-      {/* Screen modal */}
-      <div
-        className="no-print"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 100,
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(6px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "16px",
-        }}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      >
+      {createPortal(
+        /* ── Backdrop ── */
         <div
+          className="no-print flex items-end md:items-center justify-center md:p-6"
           style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            width: "100%",
-            maxWidth: 920,
-            maxHeight: "92vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            zIndex: 1000,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(6px)",
           }}
+          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          {/* Header */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px 24px 14px",
-            borderBottom: "1px solid var(--border)",
-            flexShrink: 0,
-          }}>
-            <div>
-              <h2 className="font-display" style={{ fontSize: "1.4rem", fontWeight: 400, color: "var(--text)" }}>
-                Exportar Relatório
-              </h2>
-              <p style={{ fontSize: 12, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", marginTop: 2 }}>
-                {company.name} · {exportData.periodRange}
-              </p>
+          {/* ── Sheet / Dialog ── */}
+          <div
+            className="w-full rounded-t-2xl md:rounded-2xl md:max-w-4xl"
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              /* dvh accounts for mobile browser chrome (iOS Safari address bar) */
+              minHeight: "min(65dvh, 65vh)",
+              maxHeight: "min(90dvh, 90vh)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            {/* Drag handle — mobile only */}
+            <div className="flex md:hidden justify-center pt-3 pb-1 flex-shrink-0">
+              <div style={{ width: "2.5rem", height: "0.25rem", borderRadius: "99px", background: "var(--border)" }} />
             </div>
-            <button
-              onClick={onClose}
-              style={{ color: "var(--text-3)", padding: 6, borderRadius: 4, cursor: "pointer", background: "transparent", border: "none" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "var(--text)")}
-              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-3)")}
-            >
-              <X size={18} />
-            </button>
-          </div>
 
-          {/* Tabs */}
-          <div style={{ display: "flex", gap: 0, padding: "0 24px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
-            {([
-              { id: "pdf" as const,  label: "PDF",   icon: <FileText size={14} /> },
-              { id: "xlsx" as const, label: "Excel",  icon: <FileSpreadsheet size={14} /> },
-            ]).map((t) => (
+            {/* ── Header ── */}
+            <div
+              className="flex items-center justify-between flex-shrink-0"
+              style={{ padding: "1rem 1.25rem 0.875rem", borderBottom: "1px solid var(--border)" }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <h2
+                  className="font-display truncate"
+                  style={{ fontSize: t.titleSize, fontWeight: 400, color: "var(--text)", lineHeight: 1.25 }}
+                >
+                  Exportar Relatório
+                </h2>
+                <p
+                  className="truncate"
+                  style={{ fontSize: t.secondarySize, color: "var(--text-3)", fontFamily: t.fontBody, marginTop: "0.2rem" }}
+                >
+                  {company.name} · {exportData.periodRange}
+                </p>
+              </div>
+              {/* Close — 44px touch target */}
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                onClick={onClose}
+                aria-label="Fechar"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "10px 16px",
-                  fontSize: 13,
-                  fontFamily: "'Outfit', sans-serif",
-                  fontWeight: tab === t.id ? 500 : 400,
-                  color: tab === t.id ? "var(--gold)" : "var(--text-3)",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: tab === t.id ? "2px solid var(--gold)" : "2px solid transparent",
-                  cursor: "pointer",
-                  marginBottom: -1,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: "2.75rem", height: "2.75rem",
+                  borderRadius: "0.375rem", cursor: "pointer",
+                  background: "transparent", border: "none",
+                  color: "var(--text-3)", flexShrink: 0, marginLeft: "0.5rem",
                 }}
               >
-                {t.icon}
-                {t.label}
+                <X size={20} />
               </button>
-            ))}
-          </div>
+            </div>
 
-          {/* Body — scrollable */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px" }} className="sm:p-6">
-            {tab === "pdf" ? (
-              <>
-                {/* ── MOBILE: selector horizontal + botão direto ── */}
-                <div className="md:hidden">
-                  {/* Chips de template com scroll horizontal */}
-                  <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'Outfit', sans-serif" }}>
-                    Modelo
-                  </p>
-                  <div className="flex gap-2 overflow-x-auto pb-2 mb-4" style={{ scrollbarWidth: "none" }}>
-                    {TEMPLATES.map((t) => {
-                      const isActive = selected === t.id;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => setSelected(t.id)}
-                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-md"
-                          style={{
-                            fontSize: 12,
-                            fontFamily: "'Outfit', sans-serif",
-                            fontWeight: isActive ? 600 : 400,
-                            background: isActive ? "var(--gold-dim)" : "var(--bg-card-2)",
-                            border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                            color: isActive ? "var(--gold)" : "var(--text-3)",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {isActive && <Check size={11} style={{ color: "var(--gold)" }} />}
-                          {t.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+            {/* ── Tabs ── */}
+            <div
+              className="flex flex-shrink-0"
+              style={{ padding: "0 1.25rem", borderBottom: "1px solid var(--border)" }}
+            >
+              {([
+                { id: "pdf"  as const, label: "PDF",   icon: <FileText size={15} /> },
+                { id: "xlsx" as const, label: "Excel",  icon: <FileSpreadsheet size={15} /> },
+              ]).map((tp) => (
+                <button
+                  key={tp.id}
+                  onClick={() => setTab(tp.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.4rem",
+                    /* 44px min touch height: 13px top + 18px content + 13px bottom */
+                    padding: "0.8125rem 1rem",
+                    fontSize: t.bodySize,
+                    fontFamily: t.fontBody,
+                    fontWeight: tab === tp.id ? 600 : 400,
+                    color: tab === tp.id ? "var(--gold)" : "var(--text-3)",
+                    background: "transparent", border: "none",
+                    borderBottom: tab === tp.id ? "2px solid var(--gold)" : "2px solid transparent",
+                    cursor: "pointer", marginBottom: "-1px",
+                  }}
+                >
+                  {tp.icon}
+                  {tp.label}
+                </button>
+              ))}
+            </div>
 
-                  {/* Info do modelo selecionado */}
-                  <div style={{ padding: "12px 14px", background: "var(--bg-card-2)", borderRadius: 6, border: "1px solid var(--border)", marginBottom: 16 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", fontFamily: "'Outfit', sans-serif", marginBottom: 3 }}>
-                      {TEMPLATES.find(t => t.id === selected)?.label}
+            {/* ── Scrollable body ── */}
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "1.25rem", paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
+
+              {tab === "pdf" ? (
+                <>
+                  {/* ══ MOBILE layout (< 768px) ══ */}
+                  <div className="md:hidden">
+                    <p style={{
+                      fontSize: t.labelSize, color: "var(--text-3)",
+                      textTransform: "uppercase", letterSpacing: "0.08em",
+                      fontFamily: t.fontBody, marginBottom: "0.75rem",
+                    }}>
+                      Escolha o modelo
                     </p>
-                    <p style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-                      {TEMPLATES.find(t => t.id === selected)?.desc}
-                    </p>
-                  </div>
 
-                  <button
-                    onClick={handlePrint}
-                    className="btn btn-gold w-full justify-center"
-                    style={{ padding: "13px 24px", fontSize: 14 }}
-                  >
-                    <Download size={16} />
-                    Salvar PDF — {TEMPLATES.find(t => t.id === selected)?.label}
-                  </button>
-                  <p style={{ textAlign: "center", fontSize: 10, color: "var(--text-3)", marginTop: 8, fontFamily: "'Outfit', sans-serif" }}>
-                    Use "Salvar como PDF" no menu de impressão do navegador
-                  </p>
-                </div>
-
-                {/* ── DESKTOP: seletor + preview lado a lado ── */}
-                <div className="hidden md:flex" style={{ gap: 24 }}>
-                  {/* Left: template picker */}
-                  <div style={{ flexShrink: 0, width: 160 }}>
-                    <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
-                      Modelo
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {TEMPLATES.map((t) => {
-                        const isActive = selected === t.id;
+                    {/* Template cards — vertical list, full-width tap targets */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", marginBottom: "1.5rem" }}>
+                      {TEMPLATES.map((tp) => {
+                        const active = selected === tp.id;
                         return (
                           <button
-                            key={t.id}
-                            onClick={() => setSelected(t.id)}
+                            key={tp.id}
+                            onClick={() => setSelected(tp.id)}
                             style={{
-                              background: "transparent",
-                              border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                              borderRadius: 6,
-                              overflow: "hidden",
+                              display: "flex", alignItems: "center",
+                              width: "100%", textAlign: "left",
+                              /* 44px+ touch target via padding */
+                              padding: "0.875rem 1rem",
+                              background: active ? "var(--gold-dim)" : "var(--bg-card-2)",
+                              border: `1.5px solid ${active ? "var(--gold)" : "var(--border)"}`,
+                              borderRadius: t.radius,
                               cursor: "pointer",
-                              position: "relative",
-                              padding: 0,
-                              textAlign: "left",
                             }}
                           >
-                            <div style={{ width: 158, height: 100, overflow: "hidden", background: "#fff", position: "relative" }}>
-                              <div style={{ transform: "scale(0.2)", transformOrigin: "top left", width: A4, height: 500, pointerEvents: "none", userSelect: "none" }}>
-                                <t.component {...templateProps} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{
+                                fontSize: t.bodySize, fontWeight: active ? 600 : 500,
+                                color: active ? "var(--gold)" : "var(--text)",
+                                fontFamily: t.fontBody,
+                              }}>
+                                {tp.label}
+                              </div>
+                              <div style={{
+                                fontSize: t.secondarySize,
+                                color: "var(--text-3)",
+                                fontFamily: t.fontBody,
+                                marginTop: "0.2rem",
+                              }}>
+                                {tp.desc}
                               </div>
                             </div>
-                            <div style={{ padding: "7px 10px", borderTop: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`, background: isActive ? "var(--gold-dim)" : "var(--bg-card-2)" }}>
-                              <div style={{ fontSize: 11, fontWeight: 500, color: isActive ? "var(--gold)" : "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
-                                {t.label}
-                              </div>
-                              <div style={{ fontSize: 9, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", marginTop: 1 }}>
-                                {t.desc}
-                              </div>
+                            <div style={{
+                              width: "1.5rem", height: "1.5rem", borderRadius: "50%", flexShrink: 0, marginLeft: "0.75rem",
+                              background: active ? "var(--gold)" : "var(--border)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              transition: "background 0.15s",
+                            }}>
+                              {active
+                                ? <Check size={11} color="#fff" strokeWidth={3} />
+                                : <div style={{ width: "0.5rem", height: "0.5rem", borderRadius: "50%", background: "var(--bg-card)" }} />
+                              }
                             </div>
-                            {isActive && (
-                              <div style={{ position: "absolute", top: 6, right: 6, width: 18, height: 18, borderRadius: "50%", background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Check size={10} color="#fff" strokeWidth={3} />
-                              </div>
-                            )}
                           </button>
                         );
                       })}
                     </div>
-                  </div>
 
-                  {/* Right: A4 preview */}
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                    <p style={{ fontSize: 10, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "'Outfit', sans-serif" }}>
-                      Pré-visualização
-                    </p>
-                    <div style={{ flex: 1, overflow: "auto", background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border)", padding: 16 }}>
-                      <div style={{ width: Math.floor(A4 * 0.6), overflow: "hidden", position: "relative", margin: "0 auto" }}>
-                        <div style={{ transform: "scale(0.6)", transformOrigin: "top left", width: A4, pointerEvents: "none", userSelect: "none" }}>
-                          <SelectedTemplate {...templateProps} />
-                        </div>
-                      </div>
-                    </div>
-                    <button onClick={handlePrint} className="btn btn-gold" style={{ marginTop: 14, justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
-                      <Download size={16} />
+                    {/* Action — full-width, 52px tall */}
+                    <button
+                      onClick={handlePrint}
+                      className="btn btn-gold w-full justify-center"
+                      style={{ fontSize: "1rem", padding: "0.9375rem 1.25rem", borderRadius: t.radius }}
+                    >
+                      <Download size={18} />
                       Salvar PDF
                     </button>
-                    <p style={{ textAlign: "center", fontSize: 10, color: "var(--text-3)", marginTop: 8, fontFamily: "'Outfit', sans-serif" }}>
-                      Use "Salvar como PDF" no menu de impressão do navegador
+                    <p style={{
+                      textAlign: "center", fontSize: t.hintSize,
+                      color: "var(--text-3)", marginTop: "0.625rem", fontFamily: t.fontBody,
+                    }}>
+                      Escolha "Salvar como PDF" no menu de impressão
                     </p>
                   </div>
-                </div>
-              </>
-            ) : (
-              /* XLSX tab */
-              <div style={{ maxWidth: 540 }}>
-                <p style={{ fontSize: 13, color: "var(--text-2)", fontFamily: "'Outfit', sans-serif", marginBottom: 20 }}>
-                  O arquivo Excel contém <strong style={{ color: "var(--text)" }}>4 abas</strong> com todos os dados formatados e prontos para análise.
-                </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-                  {XLSX_SHEETS.map((s, i) => (
-                    <div key={s.name} style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 14,
-                      padding: "14px 16px",
-                      background: "var(--bg-card-2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                    }}>
-                      <div style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 4,
-                        background: "var(--gold-dim)",
-                        border: "1px solid rgba(184,129,30,0.25)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: "var(--gold)",
-                        fontFamily: "'DM Mono', monospace",
+                  {/* ══ DESKTOP layout (≥ 768px) ══ */}
+                  <div className="hidden md:flex" style={{ gap: "1.5rem" }}>
+                    {/* Left: thumbnail picker */}
+                    <div style={{ flexShrink: 0, width: "10rem" }}>
+                      <p style={{
+                        fontSize: "0.625rem", color: "var(--text-3)",
+                        textTransform: "uppercase", letterSpacing: "0.1em",
+                        marginBottom: "0.625rem", fontFamily: t.fontBody,
                       }}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>
-                          {s.name}
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", marginTop: 2 }}>
-                          {s.desc}
-                        </div>
+                        Modelo
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        {TEMPLATES.map((tp) => {
+                          const active = selected === tp.id;
+                          return (
+                            <button
+                              key={tp.id}
+                              onClick={() => setSelected(tp.id)}
+                              style={{
+                                background: "transparent",
+                                border: `1px solid ${active ? "var(--gold)" : "var(--border)"}`,
+                                borderRadius: "0.375rem", overflow: "hidden",
+                                cursor: "pointer", position: "relative",
+                                padding: 0, textAlign: "left",
+                              }}
+                            >
+                              <div style={{ width: "158px", height: "100px", overflow: "hidden", background: "#fff" }}>
+                                <div style={{ transform: "scale(0.2)", transformOrigin: "top left", width: A4, height: 500, pointerEvents: "none", userSelect: "none" }}>
+                                  <tp.component {...templateProps} />
+                                </div>
+                              </div>
+                              <div style={{
+                                padding: "0.4375rem 0.625rem",
+                                borderTop: `1px solid ${active ? "var(--gold)" : "var(--border)"}`,
+                                background: active ? "var(--gold-dim)" : "var(--bg-card-2)",
+                              }}>
+                                <div style={{ fontSize: "0.6875rem", fontWeight: 500, color: active ? "var(--gold)" : "var(--text)", fontFamily: t.fontBody }}>
+                                  {tp.label}
+                                </div>
+                                <div style={{ fontSize: "0.5625rem", color: "var(--text-3)", fontFamily: t.fontBody, marginTop: "0.0625rem" }}>
+                                  {tp.desc}
+                                </div>
+                              </div>
+                              {active && (
+                                <div style={{
+                                  position: "absolute", top: "0.375rem", right: "0.375rem",
+                                  width: "1.125rem", height: "1.125rem", borderRadius: "50%",
+                                  background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                  <Check size={10} color="#fff" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))}
+
+                    {/* Right: A4 preview */}
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                      <p style={{ fontSize: "0.625rem", color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.625rem", fontFamily: t.fontBody }}>
+                        Pré-visualização
+                      </p>
+                      <div style={{ flex: 1, overflow: "auto", background: "var(--bg-surface)", borderRadius: "0.375rem", border: "1px solid var(--border)", padding: "1rem" }}>
+                        {/* inner wrapper clamps the scaled A4 — no fixed px width so it adapts to flex column */}
+                        <div style={{ maxWidth: "100%", overflow: "hidden", margin: "0 auto" }}>
+                          <div style={{ transform: "scale(0.6)", transformOrigin: "top left", width: A4, pointerEvents: "none", userSelect: "none" }}>
+                            <SelectedTemplate {...templateProps} />
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={handlePrint} className="btn btn-gold" style={{ marginTop: "0.875rem", justifyContent: "center", padding: "0.75rem 1.5rem", fontSize: "0.875rem" }}>
+                        <Download size={16} />
+                        Salvar PDF
+                      </button>
+                      <p style={{ textAlign: "center", fontSize: "0.625rem", color: "var(--text-3)", marginTop: "0.5rem", fontFamily: t.fontBody }}>
+                        Use "Salvar como PDF" no menu de impressão do navegador
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* ══ XLSX tab ══ */
+                <div>
+                  <p style={{ fontSize: t.bodySize, color: "var(--text-2)", fontFamily: t.fontBody, marginBottom: "1.25rem" }}>
+                    O arquivo Excel contém <strong style={{ color: "var(--text)" }}>4 abas</strong> com todos os dados formatados.
+                  </p>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", marginBottom: "1.75rem" }}>
+                    {XLSX_SHEETS.map((s, i) => (
+                      <div
+                        key={s.name}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "0.875rem",
+                          padding: "0.875rem 1rem",
+                          background: "var(--bg-card-2)", border: "1px solid var(--border)", borderRadius: t.radius,
+                        }}
+                      >
+                        <div style={{
+                          width: "2rem", height: "2rem", borderRadius: "0.375rem", flexShrink: 0,
+                          background: "var(--gold-dim)", border: "1px solid rgba(184,129,30,0.25)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "0.8125rem", fontWeight: 700, color: "var(--gold)", fontFamily: "'DM Mono', monospace",
+                        }}>
+                          {i + 1}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: t.bodySize, fontWeight: 500, color: "var(--text)", fontFamily: t.fontBody }}>
+                            {s.name}
+                          </div>
+                          <div style={{ fontSize: t.secondarySize, color: "var(--text-3)", fontFamily: t.fontBody, marginTop: "0.2rem" }}>
+                            {s.desc}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action — full-width on mobile */}
+                  <button
+                    onClick={handleXLSX}
+                    disabled={xlsxLoading}
+                    className="btn btn-gold w-full md:w-auto justify-center"
+                    style={{ fontSize: "1rem", padding: "0.9375rem 1.75rem", borderRadius: t.radius, opacity: xlsxLoading ? 0.7 : 1 }}
+                  >
+                    {xlsxDone
+                      ? <><Check size={16} /> Baixado!</>
+                      : xlsxLoading
+                      ? "Gerando..."
+                      : <><FileSpreadsheet size={18} /> Baixar Excel (.xlsx)</>
+                    }
+                  </button>
+                  <p style={{ fontSize: t.hintSize, color: "var(--text-3)", marginTop: "0.625rem", fontFamily: t.fontBody }}>
+                    Compatível com Microsoft Excel, Google Sheets e LibreOffice.
+                  </p>
                 </div>
-
-                <button
-                  onClick={handleXLSX}
-                  disabled={xlsxLoading}
-                  className="btn btn-gold"
-                  style={{ padding: "12px 28px", fontSize: 14, opacity: xlsxLoading ? 0.7 : 1 }}
-                >
-                  {xlsxDone
-                    ? <><Check size={16} /> Baixado!</>
-                    : xlsxLoading
-                    ? "Gerando..."
-                    : <><FileSpreadsheet size={16} /> Baixar Excel (.xlsx)</>
-                  }
-                </button>
-                <p style={{ fontSize: 10, color: "var(--text-3)", marginTop: 10, fontFamily: "'Outfit', sans-serif" }}>
-                  Compatível com Microsoft Excel, Google Sheets e LibreOffice.
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.body,
+      )}
 
-      {/* Print portal — always mounted, hidden on screen, shown on print */}
+      {/* Print portal */}
       <PrintContainer>
         <SelectedTemplate {...templateProps} />
       </PrintContainer>
