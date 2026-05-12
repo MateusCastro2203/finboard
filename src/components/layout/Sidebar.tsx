@@ -1,24 +1,27 @@
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, LogOut, Target, Settings, HelpCircle } from "lucide-react";
+import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, LogOut, Target, Settings, HelpCircle, CalendarRange } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
 
-const navItems = [
+const BASE_NAV_ITEMS = [
   { tab: "dre",        icon: BarChart3,       label: "Resultado do Mês" },
   { tab: "margem",     icon: TrendingUp,      label: "Análise de Margem" },
   { tab: "fluxo",      icon: ArrowLeftRight,  label: "Fluxo de Caixa" },
   { tab: "orcamento",  icon: Target,          label: "Orçamento vs Real" },
   { tab: "executivo",  icon: Presentation,    label: "Resumo Executivo" },
+  { tab: "anual",      icon: CalendarRange,   label: "Comparativo Anual" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, isDemo = false, onOpenSupport }: {
+export default function Sidebar({ activeTab, onTabChange, isDemo = false, onOpenSupport, hasMultipleYears = false }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
   isDemo?: boolean;
   onOpenSupport?: () => void;
+  hasMultipleYears?: boolean;
 }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const navItems = BASE_NAV_ITEMS.filter(item => item.tab !== "anual" || hasMultipleYears);
 
   async function handleSignOut() {
     await signOut();

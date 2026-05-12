@@ -17,18 +17,18 @@ function calcularProjecao(data: DreCalculado[]) {
     return Math.pow(valid[valid.length - 1] / valid[0], 1 / (valid.length - 1)) - 1;
   }
 
-  const rlGrowth    = growthRate(last3.map(d => d.receita_liquida));
+  const rlGrowth     = growthRate(last3.map(d => d.receita_liquida));
   const ebitdaGrowth = growthRate(last3.map(d => d.ebitda));
-  const lastRL     = data[data.length - 1].receita_liquida;
-  const lastEBITDA = data[data.length - 1].ebitda;
-  const lastPeriodo = data[data.length - 1].periodo;
+  const lastRL       = data[data.length - 1].receita_liquida;
+  const lastEBITDA   = data[data.length - 1].ebitda;
+  const lastPeriodo  = data[data.length - 1].periodo;
 
   return Array.from({ length: 3 }, (_, i) => {
     const [year, month] = lastPeriodo.split("-").map(Number);
     const next = new Date(year, month - 1 + i + 1, 1);
     const label = formatPeriodo(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
     return {
-      periodo: label,
+      periodo:     label,
       rl_proj:     lastRL     * Math.pow(1 + rlGrowth,     i + 1),
       ebitda_proj: lastEBITDA * Math.pow(1 + ebitdaGrowth, i + 1),
     };
@@ -64,6 +64,7 @@ function DarkTooltip({ active, payload, label }: any) {
 
 export default function DREChart({ data }: Props) {
   const [showProjecao, setShowProjecao] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const realData = data.map((d) => ({
     periodo: formatPeriodo(d.periodo),
@@ -179,21 +180,42 @@ export default function DREChart({ data }: Props) {
 
       {/* DRE Table */}
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
           <p className="text-xs uppercase tracking-widest" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
             Demonstração do Resultado do Exercício
           </p>
+          <button
+            onClick={() => setShowAnalysis(v => !v)}
+            style={{
+              fontSize: "0.7rem", padding: "3px 8px", borderRadius: 4,
+              border: "1px solid var(--border)",
+              background: showAnalysis ? "var(--gold-dim)" : "transparent",
+              color: showAnalysis ? "var(--gold)" : "var(--text-3)",
+              fontFamily: "'Outfit', sans-serif", cursor: "pointer",
+            }}
+          >
+            Análise H/V
+          </button>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="w-full" style={{ fontSize: "0.8125rem", fontFamily: "'Outfit', sans-serif" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-5 py-2.5" style={{ color: "var(--text-3)", fontWeight: 500 }}>Linha</th>
-                {data.map((d) => (
-                  <th key={d.periodo} className="text-right px-4 py-2.5 whitespace-nowrap" style={{ color: "var(--text-3)", fontWeight: 500 }}>
-                    {formatPeriodo(d.periodo)}
-                  </th>
-                ))}
+                {data.flatMap((d) => {
+                  const cells = [
+                    <th key={d.periodo} className="text-right px-4 py-2.5 whitespace-nowrap" style={{ color: "var(--text-3)", fontWeight: 500 }}>
+                      {formatPeriodo(d.periodo)}
+                    </th>,
+                  ];
+                  if (showAnalysis) {
+                    cells.push(
+                      <th key={`${d.periodo}-prl`} className="text-right px-2 py-2.5" style={{ color: "var(--text-3)", fontWeight: 400, fontSize: "0.7rem" }}>% RL</th>,
+                      <th key={`${d.periodo}-delta`} className="text-right px-2 py-2.5" style={{ color: "var(--text-3)", fontWeight: 400, fontSize: "0.7rem" }}>Δ%</th>,
+                    );
+                  }
+                  return cells;
+                })}
               </tr>
             </thead>
             <tbody>
@@ -211,11 +233,19 @@ export default function DREChart({ data }: Props) {
                   >
                     {row.label}
                   </td>
-                  {data.map((d) => {
+                  {data.flatMap((d, idx) => {
                     const val = d[row.key as keyof DreCalculado] as number;
-                    return (
+                    const prevD = idx > 0 ? data[idx - 1] : null;
+                    const prevVal = prevD ? prevD[row.key as keyof DreCalculado] as number : 0;
+                    const prl = d.receita_liquida > 0 ? (val / d.receita_liquida) * 100 : null;
+                    const deltaVal = prevD && prevVal !== 0 ? ((val - prevVal) / Math.abs(prevVal)) * 100 : null;
+                    const deltaColor = deltaVal === null ? "var(--text-3)"
+                      : row.positive === true  ? (deltaVal >= 0 ? "var(--green)" : "var(--red)")
+                      : row.positive === false ? (deltaVal <= 0 ? "var(--green)" : "var(--red)")
+                      : "var(--text-3)";
+                    const cells = [
                       <td
-                        key={d.periodo}
+                        key={`${d.periodo}-val`}
                         className="text-right px-4 py-2 font-mono-data"
                         style={{
                           color: val < 0 ? "var(--red)" : row.bold ? "var(--text)" : "var(--text-2)",
@@ -223,26 +253,46 @@ export default function DREChart({ data }: Props) {
                         }}
                       >
                         {formatBRL(val)}
-                      </td>
-                    );
+                      </td>,
+                    ];
+                    if (showAnalysis) {
+                      cells.push(
+                        <td key={`${d.periodo}-prl`} className="text-right px-2 py-2 font-mono-data" style={{ color: "var(--text-3)", fontSize: "0.72rem" }}>
+                          {prl !== null ? `${prl.toFixed(1)}%` : "—"}
+                        </td>,
+                        <td key={`${d.periodo}-delta`} className="text-right px-2 py-2 font-mono-data" style={{ color: deltaColor, fontSize: "0.72rem" }}>
+                          {deltaVal !== null ? `${deltaVal >= 0 ? "+" : ""}${deltaVal.toFixed(1)}%` : "—"}
+                        </td>,
+                      );
+                    }
+                    return cells;
                   })}
                 </tr>
               ))}
               {/* Margin rows */}
               {[
-                { label: "Margem Bruta",    key: "margem_bruta" as const },
-                { label: "Margem EBITDA",   key: "margem_ebitda" as const },
-                { label: "Margem Líquida",  key: "margem_liquida" as const },
+                { label: "Margem Bruta",   key: "margem_bruta"   as const },
+                { label: "Margem EBITDA",  key: "margem_ebitda"  as const },
+                { label: "Margem Líquida", key: "margem_liquida" as const },
               ].map((mr) => (
                 <tr key={mr.label} style={{ borderBottom: "1px solid var(--border-soft)", background: "var(--green-dim)" }}>
                   <td className="px-5 py-2 font-medium" style={{ color: "var(--green)", fontFamily: "'Outfit', sans-serif", fontSize: "0.8125rem" }}>
                     {mr.label}
                   </td>
-                  {data.map((d) => (
-                    <td key={d.periodo} className="text-right px-4 py-2 font-mono-data" style={{ color: "var(--green)" }}>
-                      {formatPercent(d[mr.key])}
-                    </td>
-                  ))}
+                  {data.flatMap((d) => {
+                    const cells = [
+                      <td key={`${d.periodo}-val`} className="text-right px-4 py-2 font-mono-data" style={{ color: "var(--green)" }}>
+                        {formatPercent(d[mr.key])}
+                      </td>,
+                    ];
+                    if (showAnalysis) {
+                      cells.push(
+                        <td key={`${d.periodo}-prl`} />,
+                        <td key={`${d.periodo}-delta`} />,
+                      );
+                    }
+                    return cells;
+                  })}
                 </tr>
               ))}
             </tbody>
