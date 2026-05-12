@@ -121,7 +121,7 @@ serve(async (req) => {
       mp_preference_id: payment.preference_id ?? null,
       status,
       amount: payment.transaction_amount,
-    }, { onConflict: "user_id" });
+    }, { onConflict: "mp_payment_id" });
 
     if (status === "approved") {
       await supabase
