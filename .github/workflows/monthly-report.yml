@@ -1,0 +1,22 @@
+name: Relatório Mensal Automático
+
+on:
+  schedule:
+    - cron: '0 9 5 * *'
+  workflow_dispatch:
+
+jobs:
+  send-monthly-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar relatório mensal
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/monthly-report" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+          echo "Response status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Error: Edge Function returned $STATUS"
+            exit 1
+          fi
