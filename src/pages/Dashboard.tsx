@@ -35,7 +35,12 @@ export default function Dashboard() {
   const { company, dreData, fluxoData, loading, error, reload } = useFinancialData(user?.id);
   const { metas, saveMeta } = useMetas(company?.id);
   const { getAnotacao, salvar } = useAnotacoes(company?.id);
-  const [activeTab, setActiveTab] = useState("dre");
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("finboard:lastTab") ?? "dre");
+
+  function handleTabChange(tab: string) {
+    setActiveTab(tab);
+    localStorage.setItem("finboard:lastTab", tab);
+  }
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExport,     setShowExport]     = useState(false);
   const [showSupport,    setShowSupport]    = useState(false);
@@ -103,7 +108,7 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{ background: "var(--bg-surface)" }}>
       {/* Sidebar — oculta em mobile */}
       <div className="no-print hidden md:block">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onOpenSupport={() => setShowSupport(true)} hasMultipleYears={hasMultipleYears} />
+        <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onOpenSupport={() => setShowSupport(true)} hasMultipleYears={hasMultipleYears} />
       </div>
 
       <main className="flex-1 px-4 md:px-6 py-6 overflow-x-hidden pb-20 md:pb-6" style={{ minWidth: 0 }}>
@@ -150,7 +155,7 @@ export default function Dashboard() {
           <>
             {activeTab === "dre" && (
               <>
-                <DREChart data={dreData} />
+                <DREChart data={dreData} fluxoData={fluxoData} onTabChange={handleTabChange} />
                 {lastPeriodo && (
                   <div className="mt-4">
                     <AnotacaoCard periodo={lastPeriodo} nota={getAnotacao(lastPeriodo)} onSave={(t) => salvar(lastPeriodo, t)} />
@@ -207,7 +212,7 @@ export default function Dashboard() {
       </main>
 
       {/* Mobile nav */}
-      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} hasMultipleYears={hasMultipleYears} />
+      <MobileNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Export modal */}
       {showExport && company && (

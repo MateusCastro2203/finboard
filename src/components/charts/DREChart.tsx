@@ -4,7 +4,7 @@ import {
   Legend, ResponsiveContainer, Line, ComposedChart
 } from "recharts";
 import { formatBRL, formatPercent, formatPeriodo } from "../../lib/utils";
-import type { DreCalculado } from "../../types";
+import type { DreCalculado, FluxoCaixa, FluxoCategoria } from "../../types";
 import { DRE_ROWS } from "../../lib/dreRows";
 
 function calcularProjecao(data: DreCalculado[]) {
@@ -35,7 +35,19 @@ function calcularProjecao(data: DreCalculado[]) {
   });
 }
 
-interface Props { data: DreCalculado[]; }
+const CATEGORIA_LABELS: Record<FluxoCategoria, string> = {
+  operacional_recebimento: "Recebimentos Operacionais",
+  operacional_pagamento:   "Pagamentos Operacionais",
+  investimento:            "Investimentos",
+  financiamento_entrada:   "Financiamento (entrada)",
+  financiamento_saida:     "Financiamento (saída)",
+};
+
+interface Props {
+  data: DreCalculado[];
+  fluxoData?: FluxoCaixa[];
+  onTabChange?: (tab: string) => void;
+}
 
 const TICK = { fontSize: 11, fill: "var(--text-3)", fontFamily: "'Outfit', sans-serif" };
 
@@ -62,7 +74,7 @@ function DarkTooltip({ active, payload, label }: any) {
   );
 }
 
-export default function DREChart({ data }: Props) {
+export default function DREChart({ data, fluxoData = [], onTabChange }: Props) {
   const [showProjecao, setShowProjecao] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
@@ -81,6 +93,21 @@ export default function DREChart({ data }: Props) {
 
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
+
+  // ── Caixa do mês (último período da DRE) ──
+  const lastYM = last?.periodo.slice(0, 7) ?? "";
+  const fluxoMes = fluxoData.filter(f => f.data.startsWith(lastYM));
+  const entradasMes = fluxoMes.filter(f => f.tipo === "entrada").reduce((s, f) => s + f.valor, 0);
+  const saidasMes   = fluxoMes.filter(f => f.tipo === "saida").reduce((s, f) => s + f.valor, 0);
+  const fcoMes = entradasMes - saidasMes;
+
+  const caixaByCat = new Map<FluxoCategoria, { entradas: number; saidas: number }>();
+  for (const f of fluxoMes) {
+    if (!caixaByCat.has(f.categoria)) caixaByCat.set(f.categoria, { entradas: 0, saidas: 0 });
+    const g = caixaByCat.get(f.categoria)!;
+    if (f.tipo === "entrada") g.entradas += f.valor;
+    else g.saidas += f.valor;
+  }
 
   function delta(cur: number, pre: number) {
     if (!pre) return null;
@@ -177,6 +204,129 @@ export default function DREChart({ data }: Props) {
           </p>
         )}
       </div>
+
+      {/* ── Caixa do Mês ── */}
+      {last && (
+        <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <p className="text-xs uppercase tracking-widest" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Caixa do Mês — {formatPeriodo(last.periodo)}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", opacity: 0.7 }}>
+                Regime de caixa vs. resultado pelo regime de competência (DRE)
+              </p>
+            </div>
+            {onTabChange && (
+              <button
+                onClick={() => onTabChange("fluxo")}
+                style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Ver detalhes →
+              </button>
+            )}
+          </div>
+
+          {fluxoMes.length === 0 ? (
+            <div className="px-5 py-6 text-center">
+              <p className="text-sm" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Nenhum lançamento de caixa registrado para este período.
+              </p>
+              {onTabChange && (
+                <button
+                  onClick={() => onTabChange("fluxo")}
+                  className="mt-2 text-xs underline"
+                  style={{ color: "var(--gold)", fontFamily: "'Outfit', sans-serif", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  Adicionar via Fluxo de Caixa
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="p-5 flex flex-col gap-4">
+              {/* Mini-cards */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Entradas",    value: entradasMes, color: "var(--green)" },
+                  { label: "Saídas",      value: saidasMes,   color: "var(--red)"   },
+                  { label: "FCO (caixa)", value: fcoMes,      color: fcoMes >= 0 ? "var(--green)" : "var(--red)" },
+                ].map(k => (
+                  <div key={k.label} className="rounded-md p-3" style={{ background: "var(--bg-card-2)", border: "1px solid var(--border-soft)" }}>
+                    <p className="text-xs mb-1" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>{k.label}</p>
+                    <p className="font-mono-data font-medium" style={{ color: k.color, fontSize: "clamp(0.8rem, 3vw, 1rem)" }}>{formatBRL(k.value)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Comparação competência vs caixa */}
+              {last && (
+                <div
+                  className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-md text-xs"
+                  style={{ background: "var(--bg-card-2)", fontFamily: "'Outfit', sans-serif" }}
+                >
+                  <span style={{ color: "var(--text-3)" }}>Lucro Líquido (competência):</span>
+                  <span className="font-mono-data font-medium" style={{ color: last.lucro_liquido >= 0 ? "var(--green)" : "var(--red)" }}>
+                    {formatBRL(last.lucro_liquido)}
+                  </span>
+                  <span style={{ color: "var(--border)", margin: "0 2px" }}>·</span>
+                  <span style={{ color: "var(--text-3)" }}>FCO (caixa):</span>
+                  <span className="font-mono-data font-medium" style={{ color: fcoMes >= 0 ? "var(--green)" : "var(--red)" }}>
+                    {formatBRL(fcoMes)}
+                  </span>
+                  {(() => {
+                    const diff = fcoMes - last.lucro_liquido;
+                    if (Math.abs(diff) < 1) return null;
+                    return (
+                      <span
+                        className="ml-auto px-2 py-0.5 rounded text-xs font-medium"
+                        style={{
+                          background: diff > 0 ? "var(--green-dim)" : "var(--red-dim)",
+                          color: diff > 0 ? "var(--green)" : "var(--red)",
+                        }}
+                      >
+                        {diff > 0 ? "Caixa acima do lucro" : "Caixa abaixo do lucro"}
+                      </span>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Breakdown por categoria */}
+              <div className="rounded-md overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                <table className="w-full" style={{ fontSize: "0.78rem", fontFamily: "'Outfit', sans-serif" }}>
+                  <thead>
+                    <tr style={{ background: "var(--bg-card-2)", borderBottom: "1px solid var(--border)" }}>
+                      <th className="text-left px-4 py-2" style={{ color: "var(--text-3)", fontWeight: 500 }}>Categoria</th>
+                      <th className="text-right px-4 py-2" style={{ color: "var(--green)", fontWeight: 500 }}>Entradas</th>
+                      <th className="text-right px-4 py-2" style={{ color: "var(--red)", fontWeight: 500 }}>Saídas</th>
+                      <th className="text-right px-4 py-2" style={{ color: "var(--text-3)", fontWeight: 500 }}>Líquido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from(caixaByCat.entries()).map(([cat, v], i) => {
+                      const liquido = v.entradas - v.saidas;
+                      return (
+                        <tr key={cat} style={{ borderBottom: "1px solid var(--border-soft)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
+                          <td className="px-4 py-2" style={{ color: "var(--text-2)" }}>{CATEGORIA_LABELS[cat]}</td>
+                          <td className="text-right px-4 py-2 font-mono-data" style={{ color: v.entradas > 0 ? "var(--green)" : "var(--text-3)" }}>
+                            {v.entradas > 0 ? formatBRL(v.entradas) : "—"}
+                          </td>
+                          <td className="text-right px-4 py-2 font-mono-data" style={{ color: v.saidas > 0 ? "var(--red)" : "var(--text-3)" }}>
+                            {v.saidas > 0 ? formatBRL(v.saidas) : "—"}
+                          </td>
+                          <td className="text-right px-4 py-2 font-mono-data font-medium" style={{ color: liquido >= 0 ? "var(--green)" : "var(--red)" }}>
+                            {formatBRL(liquido)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* DRE Table */}
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
