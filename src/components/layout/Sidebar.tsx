@@ -11,10 +11,11 @@ const navItems = [
   { tab: "executivo",  icon: Presentation,    label: "Resumo Executivo" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, isDemo = false }: {
+export default function Sidebar({ activeTab, onTabChange, isDemo = false, onOpenSupport }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
   isDemo?: boolean;
+  onOpenSupport?: () => void;
 }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -89,13 +90,13 @@ export default function Sidebar({ activeTab, onTabChange, isDemo = false }: {
         {!isDemo && (
           <div className="pt-3 mt-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid var(--border-soft)" }}>
             {[
-              { label: "Inserir dados",  icon: PlusCircle,  path: "/dados" },
-              { label: "Dados da conta", icon: Settings,    path: "/conta" },
-              { label: "Suporte",        icon: HelpCircle,  path: "/suporte" },
-            ].map(({ label, icon: Icon, path }) => (
+              { label: "Inserir dados",  icon: PlusCircle,  action: () => navigate("/dados") },
+              { label: "Dados da conta", icon: Settings,    action: () => navigate("/conta") },
+              { label: "Suporte",        icon: HelpCircle,  action: onOpenSupport ?? (() => navigate("/suporte")) },
+            ].map(({ label, icon: Icon, action }) => (
               <button
-                key={path}
-                onClick={() => navigate(path)}
+                key={label}
+                onClick={action}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
                 style={{
                   color: "var(--text-3)",

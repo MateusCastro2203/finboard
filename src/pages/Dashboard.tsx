@@ -18,6 +18,7 @@ import AlertsBanner from "../components/AlertsBanner";
 import AnotacaoCard from "../components/AnotacaoCard";
 import { PlusCircle, AlertTriangle, RefreshCw, Download } from "lucide-react";
 import ExportModal from "../components/export/ExportModal";
+import SupportModal from "../components/SupportModal";
 
 const tabTitles: Record<string, string> = {
   dre:       "Resultado do Mês",
@@ -34,7 +35,8 @@ export default function Dashboard() {
   const { getAnotacao, salvar } = useAnotacoes(company?.id);
   const [activeTab, setActiveTab] = useState("dre");
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showExport, setShowExport] = useState(false);
+  const [showExport,     setShowExport]     = useState(false);
+  const [showSupport,    setShowSupport]    = useState(false);
   const navigate = useNavigate();
 
   const lastPeriodo = dreData[dreData.length - 1]?.periodo ?? "";
@@ -98,7 +100,7 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{ background: "var(--bg-surface)" }}>
       {/* Sidebar — oculta em mobile */}
       <div className="no-print hidden md:block">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onOpenSupport={() => setShowSupport(true)} />
       </div>
 
       <main className="flex-1 px-4 md:px-6 py-6 overflow-x-hidden pb-20 md:pb-6" style={{ minWidth: 0 }}>
@@ -211,6 +213,9 @@ export default function Dashboard() {
           company={company}
         />
       )}
+
+      {/* Support modal */}
+      <SupportModal open={showSupport} onClose={() => setShowSupport(false)} />
 
       {/* Onboarding — shown when user has no company */}
       {showOnboarding && (

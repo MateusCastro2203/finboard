@@ -217,7 +217,7 @@ body.modal-open {
 @media print {
   /* Reset */
   body::after  { display: none; }
-  body         { background: #fff !important; color: #111 !important; margin: 0; }
+  body         { background: #fff !important; color: #111 !important; margin: 0; position: static !important; overflow: visible !important; top: auto !important; width: auto !important; }
 
   /* Hide chrome */
   .no-print    { display: none !important; }
