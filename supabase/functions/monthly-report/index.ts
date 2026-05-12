@@ -34,16 +34,14 @@ serve(async (req) => {
     // Busca todos os usuários com acesso e com relatório mensal ativo
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, email")
       .eq("has_access", true)
       .neq("email_reports", false);
 
     let sent = 0;
 
     for (const profile of profiles ?? []) {
-      // Busca email do usuário
-      const { data: { user } } = await supabase.auth.admin.getUserById(profile.id);
-      if (!user?.email) continue;
+      if (!profile.email) continue;
 
       // Busca empresa
       const { data: companies } = await supabase
@@ -173,7 +171,7 @@ serve(async (req) => {
         headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "FinBoard <relatorio@finboard.app.br>",
-          to: [user.email],
+          to: [profile.email],
           subject: `FinBoard · Resumo de ${periodoLabel} — ${company.name}`,
           html,
         }),
