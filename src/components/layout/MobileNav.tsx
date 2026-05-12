@@ -1,18 +1,21 @@
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, Settings } from "lucide-react";
+import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, PlusCircle, Settings, CalendarRange } from "lucide-react";
 
-const navItems = [
+const BASE_NAV_ITEMS = [
   { tab: "dre",        icon: BarChart3,      label: "Resultado" },
   { tab: "margem",     icon: TrendingUp,     label: "Margem" },
   { tab: "fluxo",      icon: ArrowLeftRight, label: "Caixa" },
   { tab: "executivo",  icon: Presentation,   label: "Resumo" },
+  { tab: "anual",      icon: CalendarRange,  label: "Anual" },
 ];
 
-export default function MobileNav({ activeTab, onTabChange }: {
+export default function MobileNav({ activeTab, onTabChange, hasMultipleYears = false }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  hasMultipleYears?: boolean;
 }) {
   const navigate = useNavigate();
+  const navItems = BASE_NAV_ITEMS.filter(item => item.tab !== "anual" || hasMultipleYears);
 
   return (
     <nav
