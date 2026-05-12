@@ -12,6 +12,7 @@ import MarginChart from "../components/charts/MarginChart";
 import CashFlowChart from "../components/charts/CashFlowChart";
 import ExecutivePanel from "../components/charts/ExecutivePanel";
 import BudgetChart from "../components/charts/BudgetChart";
+import AnnualChart from "../components/charts/AnnualChart";
 import OnboardingWizard from "../components/OnboardingWizard";
 import EmptyDashboard from "../components/EmptyDashboard";
 import AlertsBanner from "../components/AlertsBanner";
@@ -26,6 +27,7 @@ const tabTitles: Record<string, string> = {
   fluxo:     "Fluxo de Caixa",
   orcamento: "Orçamento vs Realizado",
   executivo: "Resumo Executivo",
+  anual:     "Comparativo Anual",
 };
 
 export default function Dashboard() {
@@ -40,6 +42,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const lastPeriodo = dreData[dreData.length - 1]?.periodo ?? "";
+  const hasMultipleYears = new Set(dreData.map(d => d.periodo.slice(0, 4))).size >= 2;
 
   // Show onboarding only while there's no company; close it once company is loaded
   useEffect(() => {
@@ -100,7 +103,7 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{ background: "var(--bg-surface)" }}>
       {/* Sidebar — oculta em mobile */}
       <div className="no-print hidden md:block">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onOpenSupport={() => setShowSupport(true)} />
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onOpenSupport={() => setShowSupport(true)} hasMultipleYears={hasMultipleYears} />
       </div>
 
       <main className="flex-1 px-4 md:px-6 py-6 overflow-x-hidden pb-20 md:pb-6" style={{ minWidth: 0 }}>
@@ -194,6 +197,9 @@ export default function Dashboard() {
                 segmento={company?.segmento}
               />
             )}
+            {activeTab === "anual" && (
+              <AnnualChart data={dreData} />
+            )}
           </>
         ) : (
           <EmptyDashboard />
@@ -201,7 +207,7 @@ export default function Dashboard() {
       </main>
 
       {/* Mobile nav */}
-      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} hasMultipleYears={hasMultipleYears} />
 
       {/* Export modal */}
       {showExport && company && (
