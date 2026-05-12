@@ -1313,7 +1313,7 @@ export default function Landing() {
               },
               {
                 q: "Para qual tamanho de empresa?",
-                a: "PMEs com faturamento entre R$ 2M e R$ 15M/ano que não têm um departamento financeiro estruturado. Se você é o dono e quer entender os números sem depender de relatórios complexos, é para você.",
+                a: "Para donos de negócio que faturam a partir de R$ 20 mil por mês e não têm um controller ou financeiro interno. Comércio, serviços, e-commerce, clínicas, escritórios — qualquer CNPJ onde o dono é quem precisa entender os números.",
               },
               {
                 q: "E se não gostar?",
