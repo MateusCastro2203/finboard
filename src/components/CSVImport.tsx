@@ -91,6 +91,17 @@ export default function CSVImport({ companyId, onImported }: Props) {
     setError(null);
 
     try {
+      const periodos = [...new Set(preview.map((r) => r.periodo))];
+
+      for (const p of periodos) {
+        const { error: delErr } = await supabase
+          .from("dre_lancamentos")
+          .delete()
+          .eq("company_id", companyId)
+          .eq("periodo", p);
+        if (delErr) throw delErr;
+      }
+
       const rows: object[] = [];
       for (const row of preview) {
         for (const cat of CATEGORIAS) {
@@ -100,10 +111,7 @@ export default function CSVImport({ companyId, onImported }: Props) {
         }
       }
 
-      const { error } = await supabase
-        .from("dre_lancamentos")
-        .upsert(rows, { onConflict: "company_id,periodo,categoria" });
-
+      const { error } = await supabase.from("dre_lancamentos").insert(rows);
       if (error) throw error;
 
       setImported(true);

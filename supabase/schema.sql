@@ -67,8 +67,7 @@ CREATE TABLE IF NOT EXISTS public.dre_lancamentos (
   descricao TEXT,
   valor NUMERIC(15, 2) NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  UNIQUE(company_id, periodo, categoria)
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Lançamentos de Fluxo de Caixa
