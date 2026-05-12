@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.purchases (
   mp_preference_id TEXT,
   mp_merchant_order_id TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'refunded')),
-  amount NUMERIC(10, 2) DEFAULT 297.00,
+  amount NUMERIC(10, 2) DEFAULT 98.60,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -109,3 +109,4 @@ CREATE INDEX IF NOT EXISTS idx_fluxo_company_data ON public.fluxo_caixa(company_
 CREATE INDEX IF NOT EXISTS idx_companies_user ON public.companies(user_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_user ON public.purchases(user_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_mp_payment ON public.purchases(mp_payment_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_purchases_mp_payment_unique ON public.purchases(mp_payment_id) WHERE mp_payment_id IS NOT NULL;
