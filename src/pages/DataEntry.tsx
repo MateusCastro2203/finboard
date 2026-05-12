@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useFinancialData } from "../hooks/useFinancialData";
 import CSVImport from "../components/CSVImport";
 import CSVFluxoImport from "../components/CSVFluxoImport";
+import OFXImport from "../components/OFXImport";
 import { ArrowLeft, Save, Building2, Upload, PenLine, TrendingUp, Copy } from "lucide-react";
 
 const DRE_FIELDS = [
@@ -91,7 +92,7 @@ export default function DataEntry() {
   const { company, reload } = useFinancialData(user?.id);
   const navigate = useNavigate();
   const [tab, setTab] = useState<"csv" | "manual" | "fluxo">("csv");
-  const [csvType, setCsvType] = useState<"dre" | "fluxo">("dre");
+  const [csvType, setCsvType] = useState<"dre" | "fluxo" | "ofx">("dre");
   const [periodo, setPeriodo] = useState(monthsRange(12)[11].value);
   const [values, setValues] = useState<Record<string, string>>({});
   const [fluxoValues, setFluxoValues] = useState<Record<string, string>>({});
@@ -337,6 +338,7 @@ export default function DataEntry() {
                   {([
                     { id: "dre",   label: "DRE (Resultado)"   },
                     { id: "fluxo", label: "Fluxo de Caixa"    },
+                    { id: "ofx",   label: "Extrato OFX"       },
                   ] as const).map((t) => (
                     <button
                       key={t.id}
@@ -353,10 +355,14 @@ export default function DataEntry() {
                     </button>
                   ))}
                 </div>
-                {csvType === "dre" ? (
+                {csvType === "dre" && (
                   <CSVImport companyId={company.id} onImported={async () => { await reload(); navigate("/dashboard"); }} />
-                ) : (
+                )}
+                {csvType === "fluxo" && (
                   <CSVFluxoImport companyId={company.id} onImported={async () => { await reload(); navigate("/dashboard"); }} />
+                )}
+                {csvType === "ofx" && (
+                  <OFXImport companyId={company.id} onImported={async () => { await reload(); navigate("/dashboard"); }} />
                 )}
               </>
             ) : (
