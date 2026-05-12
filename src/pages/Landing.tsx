@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 
@@ -345,6 +346,202 @@ function Testimonial({
   );
 }
 
+/* ─── Calculator helpers ─── */
+function fmtBRL(v: number) {
+  return Math.abs(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
+function MargBar({ pct, label }: { pct: number; label: string }) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  const color = pct >= 20 ? "var(--green)" : pct >= 8 ? "var(--gold)" : "var(--red)";
+  return (
+    <div>
+      <div className="rounded-full overflow-hidden" style={{ height: 4, background: "var(--border-soft)" }}>
+        <div style={{ width: `${clamped}%`, height: "100%", background: color, transition: "width 0.4s ease" }} />
+      </div>
+      <span className="text-xs mt-1 inline-block" style={{ color, fontFamily: "'Outfit', sans-serif" }}>{label}</span>
+    </div>
+  );
+}
+
+function CalculadoraSection({ onGo }: { onGo: () => void }) {
+  const [f, setF] = useState({ fat: "", imp: "", cmv: "", dop: "", jur: "" });
+
+  function upd(k: keyof typeof f) {
+    return (e: React.ChangeEvent<HTMLInputElement>) =>
+      setF(prev => ({ ...prev, [k]: e.target.value.replace(/\D/g, "") }));
+  }
+
+  function n(k: keyof typeof f) { return parseInt(f[k] || "0", 10); }
+  function fmtInput(raw: string) {
+    const v = parseInt(raw || "0", 10);
+    return v ? v.toLocaleString("pt-BR") : "";
+  }
+
+  const fat = n("fat"), imp = n("imp"), cmv = n("cmv"), dop = n("dop"), jur = n("jur");
+  const hasData = fat > 0;
+
+  const useFat = hasData ? fat : 150_000;
+  const useImp = hasData ? imp : 18_000;
+  const useCmv = hasData ? cmv : 60_000;
+  const useDop = hasData ? dop : 45_000;
+  const useJur = hasData ? jur : 5_000;
+
+  const RL   = useFat - useImp;
+  const LB   = RL - useCmv;
+  const RESS = LB - useDop;
+  const LL   = RESS - useJur;
+  const mbPct = RL > 0 ? (LB / RL) * 100 : 0;
+  const mlPct = RL > 0 ? (LL / RL) * 100 : 0;
+
+  function fmtSgn(v: number) { return `${v < 0 ? "−" : ""}${fmtBRL(v)}`; }
+
+  const fields: { k: keyof typeof f; label: string; hint: string }[] = [
+    { k: "fat", label: "Faturamento bruto do mês",          hint: "Ex: 150.000" },
+    { k: "imp", label: "Impostos sobre venda (ICMS, PIS…)", hint: "Ex: 18.000"  },
+    { k: "cmv", label: "Custo do produto/serviço",          hint: "Ex: 60.000"  },
+    { k: "dop", label: "Despesas operacionais",             hint: "Salários, aluguel, marketing…" },
+    { k: "jur", label: "Juros e financiamentos",            hint: "Ex: 5.000"   },
+  ];
+
+  return (
+    <section
+      className="py-14 sm:py-20 px-4 sm:px-6"
+      style={{
+        background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(200,145,42,0.04) 0%, transparent 70%), var(--bg)",
+        borderTop: "1px solid var(--border-soft)",
+        borderBottom: "1px solid var(--border-soft)",
+      }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-10">
+          <Label>Calculadora gratuita</Label>
+          <h2
+            className="font-display"
+            style={{ fontSize: "clamp(1.9rem, 4vw, 3rem)", fontWeight: 300, color: "var(--text)", lineHeight: 1.15 }}
+          >
+            Quanto sobrou<br />
+            <em style={{ ...S.goldHi, fontStyle: "italic" }}>no seu negócio este mês?</em>
+          </h2>
+          <p className="text-sm mt-3 mx-auto" style={{ ...S.text2, maxWidth: 420, fontFamily: "'Outfit', sans-serif" }}>
+            Insira 5 números e veja sua DRE na hora — sem cadastro, sem dados salvos.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5 items-start">
+          {/* Inputs */}
+          <div className="flex flex-col gap-3">
+            {fields.map(({ k, label, hint }) => (
+              <div key={k}>
+                <label className="block text-xs mb-1.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  {label}
+                </label>
+                <div className="flex items-center rounded" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+                  <span
+                    className="select-none"
+                    style={{
+                      padding: "10px 12px",
+                      color: "var(--text-3)",
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.75rem",
+                      borderRight: "1px solid var(--border)",
+                    }}
+                  >
+                    R$
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={fmtInput(f[k])}
+                    onChange={upd(k)}
+                    placeholder={hint}
+                    className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none"
+                    style={{ color: "var(--text)", fontFamily: "'DM Mono', monospace" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Results */}
+          <div
+            className="rounded-lg p-5 flex flex-col gap-4"
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border)", position: "sticky", top: "5.5rem" }}
+          >
+            {!hasData && (
+              <p
+                className="text-xs text-center py-2 rounded"
+                style={{
+                  color: "var(--text-3)",
+                  fontFamily: "'Outfit', sans-serif",
+                  background: "var(--gold-dim)",
+                  border: "1px solid rgba(200,145,42,0.15)",
+                }}
+              >
+                Exemplo fictício · preencha os campos para ver os seus números
+              </p>
+            )}
+
+            <div style={{ opacity: hasData ? 1 : 0.55, transition: "opacity 0.3s" }}>
+              {/* Receita Líquida */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs uppercase tracking-wider" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  Receita Líquida
+                </span>
+                <span style={{ color: "var(--text)", fontFamily: "'DM Mono', monospace", fontSize: "1.1rem" }}>
+                  {fmtBRL(RL)}
+                </span>
+              </div>
+
+              {/* Margem bruta */}
+              <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "0.875rem", marginBottom: "0.75rem" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>Lucro Bruto</span>
+                  <span className="text-sm" style={{ color: LB >= 0 ? "var(--green)" : "var(--red)", fontFamily: "'DM Mono', monospace" }}>
+                    {fmtSgn(LB)}
+                  </span>
+                </div>
+                <MargBar pct={mbPct} label={`Margem Bruta: ${mbPct.toFixed(1)}%`} />
+              </div>
+
+              {/* Resultado operacional */}
+              <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "0.875rem", marginBottom: "0.75rem" }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>Resultado Operacional</span>
+                  <span className="text-sm" style={{ color: RESS >= 0 ? "var(--green)" : "var(--red)", fontFamily: "'DM Mono', monospace" }}>
+                    {fmtSgn(RESS)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Lucro líquido */}
+              <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "0.875rem" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold" style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Lucro Líquido</span>
+                  <span style={{ color: LL >= 0 ? "var(--green)" : "var(--red)", fontFamily: "'DM Mono', monospace", fontSize: "1.25rem", fontWeight: 500 }}>
+                    {fmtSgn(LL)}
+                  </span>
+                </div>
+                <MargBar pct={mlPct} label={`Margem Líquida: ${mlPct.toFixed(1)}%`} />
+              </div>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "1rem" }}>
+              <button className="btn btn-gold w-full justify-center text-sm" onClick={onGo}>
+                Ver análise dos 12 meses no FinBoard
+                <ArrowRight size={14} />
+              </button>
+              <p className="text-xs text-center mt-2" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Histórico completo · comparativo mensal · exportação em PDF e Excel
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ════════════════════════════════════════ */
 export default function Landing() {
   const navigate = useNavigate();
@@ -527,6 +724,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ── CALCULADORA ── */}
+      <CalculadoraSection onGo={go} />
 
       {/* ── FEATURES ── */}
       <section className="py-12 sm:py-20 md:py-28 px-4 sm:px-6" style={S.bg}>
