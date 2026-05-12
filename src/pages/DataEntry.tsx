@@ -132,7 +132,9 @@ export default function DataEntry() {
       .eq("company_id", companyId)
       .eq("periodo", p);
     const vals: Record<string, string> = {};
-    for (const row of data ?? []) vals[row.categoria] = String(row.valor);
+    for (const row of data ?? []) {
+      vals[row.categoria] = String((parseFloat(vals[row.categoria] ?? "0")) + row.valor);
+    }
     setValues(vals);
   }
 
@@ -184,10 +186,14 @@ export default function DataEntry() {
 
       if (rows.length === 0) { setError("Preencha pelo menos um campo."); setSaving(false); return; }
 
-      const { error: insErr } = await supabase
+      const { error: delErr } = await supabase
         .from("dre_lancamentos")
-        .upsert(rows, { onConflict: "company_id,periodo,categoria" });
+        .delete()
+        .eq("company_id", coId)
+        .eq("periodo", periodo);
+      if (delErr) throw delErr;
 
+      const { error: insErr } = await supabase.from("dre_lancamentos").insert(rows);
       if (insErr) throw insErr;
       await reload();
       setSuccess(true);
