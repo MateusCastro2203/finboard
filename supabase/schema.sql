@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.purchases (
   mp_preference_id TEXT,
   mp_merchant_order_id TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'refunded')),
-  amount NUMERIC(10, 2) DEFAULT 297.00,
+  amount NUMERIC(10, 2) DEFAULT 98.60,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
