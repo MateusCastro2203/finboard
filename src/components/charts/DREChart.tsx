@@ -7,6 +7,34 @@ import { formatBRL, formatPercent, formatPeriodo } from "../../lib/utils";
 import type { DreCalculado } from "../../types";
 import { DRE_ROWS } from "../../lib/dreRows";
 
+function calcularProjecao(data: DreCalculado[]) {
+  if (data.length < 3) return [];
+  const last3 = data.slice(-3);
+
+  function growthRate(values: number[]): number {
+    const valid = values.filter(v => v > 0);
+    if (valid.length < 2) return 0;
+    return Math.pow(valid[valid.length - 1] / valid[0], 1 / (valid.length - 1)) - 1;
+  }
+
+  const rlGrowth     = growthRate(last3.map(d => d.receita_liquida));
+  const ebitdaGrowth = growthRate(last3.map(d => d.ebitda));
+  const lastRL       = data[data.length - 1].receita_liquida;
+  const lastEBITDA   = data[data.length - 1].ebitda;
+  const lastPeriodo  = data[data.length - 1].periodo;
+
+  return Array.from({ length: 3 }, (_, i) => {
+    const [year, month] = lastPeriodo.split("-").map(Number);
+    const next = new Date(year, month - 1 + i + 1, 1);
+    const label = formatPeriodo(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+    return {
+      periodo:     label,
+      rl_proj:     lastRL     * Math.pow(1 + rlGrowth,     i + 1),
+      ebitda_proj: lastEBITDA * Math.pow(1 + ebitdaGrowth, i + 1),
+    };
+  });
+}
+
 interface Props { data: DreCalculado[]; }
 
 const TICK = { fontSize: 11, fill: "var(--text-3)", fontFamily: "'Outfit', sans-serif" };
@@ -35,14 +63,21 @@ function DarkTooltip({ active, payload, label }: any) {
 }
 
 export default function DREChart({ data }: Props) {
+  const [showProjecao, setShowProjecao] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
-  const chartData = data.map((d) => ({
+  const realData = data.map((d) => ({
     periodo: formatPeriodo(d.periodo),
     "Receita Líq.": d.receita_liquida,
     "EBITDA": d.ebitda,
     "Margem EBITDA %": d.margem_ebitda * 100,
   }));
+
+  const projecao = showProjecao && data.length >= 3 ? calcularProjecao(data) : [];
+  const chartData = [
+    ...realData,
+    ...projecao.map(p => ({ periodo: p.periodo, rl_proj: p.rl_proj, ebitda_proj: p.ebitda_proj })),
+  ];
 
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
@@ -98,12 +133,25 @@ export default function DREChart({ data }: Props) {
 
       {/* Chart */}
       <div style={{ ...card, padding: "20px 20px 12px" }}>
-        <p
-          className="text-xs uppercase tracking-widest mb-4"
-          style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
-        >
-          Evolução — Receita vs. Resultado
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+            Evolução — Receita vs. Resultado
+          </p>
+          {data.length >= 3 && (
+            <button
+              onClick={() => setShowProjecao(v => !v)}
+              style={{
+                fontSize: "0.7rem", padding: "3px 8px", borderRadius: 4,
+                border: "1px solid var(--border)",
+                background: showProjecao ? "var(--gold-dim)" : "transparent",
+                color: showProjecao ? "var(--gold)" : "var(--text-3)",
+                fontFamily: "'Outfit', sans-serif", cursor: "pointer",
+              }}
+            >
+              Projeção 3m
+            </button>
+          )}
+        </div>
         <ResponsiveContainer width="100%" height="100%" minHeight={200} aspect={2.2}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -115,8 +163,19 @@ export default function DREChart({ data }: Props) {
             <Bar yAxisId="left" dataKey="Receita Líq." fill="var(--gold)" opacity={0.35} radius={[2, 2, 0, 0]} />
             <Bar yAxisId="left" dataKey="EBITDA" fill="var(--green)" opacity={0.8} radius={[2, 2, 0, 0]} />
             <Line yAxisId="right" type="monotone" dataKey="Margem EBITDA %" stroke="var(--gold)" strokeWidth={1.5} dot={false} />
+            {showProjecao && (
+              <>
+                <Line yAxisId="left" type="monotone" dataKey="rl_proj" name="Receita Líq. (proj.)" stroke="var(--gold)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} opacity={0.55} />
+                <Line yAxisId="left" type="monotone" dataKey="ebitda_proj" name="EBITDA (proj.)" stroke="var(--green)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} opacity={0.55} />
+              </>
+            )}
           </ComposedChart>
         </ResponsiveContainer>
+        {showProjecao && (
+          <p style={{ fontSize: "0.68rem", color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", textAlign: "center", marginTop: 8 }}>
+            Projeção baseada na tendência dos últimos 3 meses. Não constitui previsão garantida.
+          </p>
+        )}
       </div>
 
       {/* DRE Table */}
@@ -181,7 +240,7 @@ export default function DREChart({ data }: Props) {
                     const prl = d.receita_liquida > 0 ? (val / d.receita_liquida) * 100 : null;
                     const deltaVal = prevD && prevVal !== 0 ? ((val - prevVal) / Math.abs(prevVal)) * 100 : null;
                     const deltaColor = deltaVal === null ? "var(--text-3)"
-                      : row.positive === true ? (deltaVal >= 0 ? "var(--green)" : "var(--red)")
+                      : row.positive === true  ? (deltaVal >= 0 ? "var(--green)" : "var(--red)")
                       : row.positive === false ? (deltaVal <= 0 ? "var(--green)" : "var(--red)")
                       : "var(--text-3)";
                     const cells = [
@@ -212,9 +271,9 @@ export default function DREChart({ data }: Props) {
               ))}
               {/* Margin rows */}
               {[
-                { label: "Margem Bruta",    key: "margem_bruta" as const },
-                { label: "Margem EBITDA",   key: "margem_ebitda" as const },
-                { label: "Margem Líquida",  key: "margem_liquida" as const },
+                { label: "Margem Bruta",   key: "margem_bruta"   as const },
+                { label: "Margem EBITDA",  key: "margem_ebitda"  as const },
+                { label: "Margem Líquida", key: "margem_liquida" as const },
               ].map((mr) => (
                 <tr key={mr.label} style={{ borderBottom: "1px solid var(--border-soft)", background: "var(--green-dim)" }}>
                   <td className="px-5 py-2 font-medium" style={{ color: "var(--green)", fontFamily: "'Outfit', sans-serif", fontSize: "0.8125rem" }}>
