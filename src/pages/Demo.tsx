@@ -5,6 +5,7 @@ import DREChart from "../components/charts/DREChart";
 import MarginChart from "../components/charts/MarginChart";
 import CashFlowChart from "../components/charts/CashFlowChart";
 import ExecutivePanel from "../components/charts/ExecutivePanel";
+import HealthScore from "../components/HealthScore";
 import Sidebar from "../components/layout/Sidebar";
 import type { DreCalculado, FluxoCaixa } from "../types";
 
@@ -154,6 +155,9 @@ export default function Demo() {
             </button>
           ))}
         </div>
+
+        {/* Score de saúde */}
+        <HealthScore data={DEMO_DRE} />
 
         {/* Header */}
         <div className="mb-4 sm:mb-6">

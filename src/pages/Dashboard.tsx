@@ -16,6 +16,7 @@ import AnnualChart from "../components/charts/AnnualChart";
 import OnboardingWizard from "../components/OnboardingWizard";
 import EmptyDashboard from "../components/EmptyDashboard";
 import AlertsBanner from "../components/AlertsBanner";
+import HealthScore from "../components/HealthScore";
 import AnotacaoCard from "../components/AnotacaoCard";
 import { PlusCircle, AlertTriangle, RefreshCw, Download } from "lucide-react";
 import ExportModal from "../components/export/ExportModal";
@@ -112,6 +113,9 @@ export default function Dashboard() {
       </div>
 
       <main className="flex-1 px-4 md:px-6 py-6 overflow-x-hidden pb-20 md:pb-6" style={{ minWidth: 0 }}>
+        {/* Score de saúde + frases automáticas */}
+        {dreData.length > 0 && <HealthScore data={dreData} />}
+
         {/* Alertas automáticos */}
         {dreData.length >= 2 && <AlertsBanner data={dreData} />}
 
