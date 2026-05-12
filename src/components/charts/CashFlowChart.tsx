@@ -208,24 +208,41 @@ export default function CashFlowChart({ data }: Props) {
                   <p className="text-xs font-medium mb-2" style={{ color: "var(--green)", fontFamily: "'Outfit', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Entradas
                   </p>
-                  <div className="flex flex-col gap-1">
-                    {Array.from(detail.entradas.entries()).map(([cat, group]) => (
+                  <div className="rounded-md overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    {Array.from(detail.entradas.entries()).map(([cat, group], gi) => (
                       <div key={cat}>
-                        <div className="flex items-center justify-between py-1.5 px-3 rounded" style={{ background: "var(--green-dim)" }}>
-                          <span className="text-sm font-medium" style={{ color: "var(--green)", fontFamily: "'Outfit', sans-serif" }}>
+                        {/* Categoria header */}
+                        <div
+                          className="flex items-center justify-between px-4 py-2"
+                          style={{ background: "var(--green-dim)", borderTop: gi > 0 ? "1px solid var(--border)" : undefined }}
+                        >
+                          <span className="text-xs font-medium" style={{ color: "var(--green)", fontFamily: "'Outfit', sans-serif" }}>
                             {CATEGORIA_LABELS[cat]}
                           </span>
-                          <span className="font-mono-data font-medium text-sm" style={{ color: "var(--green)" }}>
+                          <span className="font-mono-data font-medium text-xs" style={{ color: "var(--green)" }}>
                             {formatBRL(group.total)}
                           </span>
                         </div>
-                        {group.rows.length > 1 && group.rows.map((row) => (
-                          <div key={row.id} className="flex items-center justify-between py-1 px-4" style={{ borderBottom: "1px solid var(--border-soft)" }}>
-                            <span className="text-xs truncate max-w-[60%]" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                        {/* Linhas individuais — sempre visíveis */}
+                        {group.rows.sort((a, b) => a.data.localeCompare(b.data)).map((row, ri) => (
+                          <div
+                            key={row.id}
+                            className="grid px-4 py-1.5"
+                            style={{
+                              gridTemplateColumns: "5rem 1fr auto",
+                              gap: "0 12px",
+                              borderTop: "1px solid var(--border-soft)",
+                              background: ri % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
+                            }}
+                          >
+                            <span className="font-mono-data text-xs" style={{ color: "var(--text-3)" }}>
+                              {row.data.slice(5, 10).replace("-", "/")}
+                            </span>
+                            <span className="text-xs truncate" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif" }}>
                               {row.descricao || "—"}
                             </span>
-                            <span className="font-mono-data text-xs" style={{ color: "var(--text-2)" }}>
-                              {formatBRL(row.valor)}
+                            <span className="font-mono-data text-xs text-right" style={{ color: "var(--green)" }}>
+                              +{formatBRL(row.valor)}
                             </span>
                           </div>
                         ))}
@@ -241,24 +258,39 @@ export default function CashFlowChart({ data }: Props) {
                   <p className="text-xs font-medium mb-2" style={{ color: "var(--red)", fontFamily: "'Outfit', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Saídas
                   </p>
-                  <div className="flex flex-col gap-1">
-                    {Array.from(detail.saidas.entries()).map(([cat, group]) => (
+                  <div className="rounded-md overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    {Array.from(detail.saidas.entries()).map(([cat, group], gi) => (
                       <div key={cat}>
-                        <div className="flex items-center justify-between py-1.5 px-3 rounded" style={{ background: "var(--red-dim)" }}>
-                          <span className="text-sm font-medium" style={{ color: "var(--red)", fontFamily: "'Outfit', sans-serif" }}>
+                        <div
+                          className="flex items-center justify-between px-4 py-2"
+                          style={{ background: "var(--red-dim)", borderTop: gi > 0 ? "1px solid var(--border)" : undefined }}
+                        >
+                          <span className="text-xs font-medium" style={{ color: "var(--red)", fontFamily: "'Outfit', sans-serif" }}>
                             {CATEGORIA_LABELS[cat]}
                           </span>
-                          <span className="font-mono-data font-medium text-sm" style={{ color: "var(--red)" }}>
+                          <span className="font-mono-data font-medium text-xs" style={{ color: "var(--red)" }}>
                             {formatBRL(group.total)}
                           </span>
                         </div>
-                        {group.rows.length > 1 && group.rows.map((row) => (
-                          <div key={row.id} className="flex items-center justify-between py-1 px-4" style={{ borderBottom: "1px solid var(--border-soft)" }}>
-                            <span className="text-xs truncate max-w-[60%]" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                        {group.rows.sort((a, b) => a.data.localeCompare(b.data)).map((row, ri) => (
+                          <div
+                            key={row.id}
+                            className="grid px-4 py-1.5"
+                            style={{
+                              gridTemplateColumns: "5rem 1fr auto",
+                              gap: "0 12px",
+                              borderTop: "1px solid var(--border-soft)",
+                              background: ri % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
+                            }}
+                          >
+                            <span className="font-mono-data text-xs" style={{ color: "var(--text-3)" }}>
+                              {row.data.slice(5, 10).replace("-", "/")}
+                            </span>
+                            <span className="text-xs truncate" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif" }}>
                               {row.descricao || "—"}
                             </span>
-                            <span className="font-mono-data text-xs" style={{ color: "var(--text-2)" }}>
-                              {formatBRL(row.valor)}
+                            <span className="font-mono-data text-xs text-right" style={{ color: "var(--red)" }}>
+                              -{formatBRL(row.valor)}
                             </span>
                           </div>
                         ))}
