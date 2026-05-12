@@ -36,6 +36,30 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
   const totalFluxoEntradas = fluxoData.filter(f => f.tipo === "entrada").reduce((s, f) => s + f.valor, 0);
   const totalFluxoSaidas   = fluxoData.filter(f => f.tipo === "saida").reduce((s, f) => s + f.valor, 0);
 
+  // F4: YTD
+  const currentYear = new Date().getFullYear().toString();
+  const ytdData = dreData.filter(d => d.periodo.startsWith(currentYear));
+  const ytd = ytdData.reduce(
+    (acc, d) => ({
+      receita_liquida: acc.receita_liquida + d.receita_liquida,
+      ebitda: acc.ebitda + d.ebitda,
+      lucro_liquido: acc.lucro_liquido + d.lucro_liquido,
+    }),
+    { receita_liquida: 0, ebitda: 0, lucro_liquido: 0 }
+  );
+  const ytdMonths = ytdData.length;
+  const ytdMargemEbitda = ytd.receita_liquida > 0 ? ytd.ebitda / ytd.receita_liquida : 0;
+
+  // F5: Break-even
+  const breakEven = (() => {
+    if (!last || last.receita_liquida <= 0) return null;
+    const custosTotais = last.cmv + last.despesas_comerciais + last.despesas_administrativas
+      + last.despesas_pessoal + last.outras_despesas_op + last.depreciacao;
+    const margemContribuicao = last.receita_liquida > 0 ? last.lucro_bruto / last.receita_liquida : 0;
+    if (margemContribuicao <= 0) return null;
+    return custosTotais / margemContribuicao;
+  })();
+
   if (!last) {
     return (
       <div
@@ -155,6 +179,25 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
             </div>
           </div>
 
+          {/* F5: Break-even */}
+          {breakEven !== null && (
+            <div style={{ marginTop: -8, padding: "10px 14px", borderRadius: 4, border: "1px solid var(--border-soft)", background: "var(--bg-card-2)" }}>
+              <p style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", marginBottom: 4 }}>
+                Ponto de Equilíbrio — {formatPeriodo(last.periodo)}
+              </p>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <p className="font-mono-data" style={{ fontSize: "1rem", fontWeight: 400, color: last.receita_liquida >= breakEven ? "var(--green)" : "var(--red)" }}>
+                  {formatBRL(breakEven)}
+                </p>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  {last.receita_liquida >= breakEven
+                    ? `✓ Coberto — ${formatBRL(last.receita_liquida - breakEven)} acima do ponto de equilíbrio`
+                    : `⚠ Faltaram ${formatBRL(breakEven - last.receita_liquida)} para cobrir todos os custos`}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Trend + Margins */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -246,6 +289,30 @@ export default function ExecutivePanel({ dreData, fluxoData, companyName, cnpj, 
               ))}
             </div>
           </div>
+
+          {/* F4: YTD */}
+          {ytdMonths >= 2 && (
+            <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: 20 }}>
+              <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Acumulado do Ano — Jan–{formatPeriodo(dreData[dreData.length - 1].periodo)} ({ytdMonths} meses)
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                {([
+                  { label: "Receita Líquida YTD", value: ytd.receita_liquida },
+                  { label: "EBITDA YTD",           value: ytd.ebitda },
+                  { label: "Margem EBITDA YTD",    value: ytdMargemEbitda, isPercent: true },
+                  { label: "Lucro Líquido YTD",    value: ytd.lucro_liquido },
+                ] as { label: string; value: number; isPercent?: boolean }[]).map((kpi) => (
+                  <div key={kpi.label} style={{ background: "var(--bg-card-2)", borderRadius: 4, border: "1px solid var(--border-soft)", padding: "10px 12px" }}>
+                    <p style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", marginBottom: 4 }}>{kpi.label}</p>
+                    <p className="font-mono-data" style={{ fontSize: "clamp(0.85rem, 2.5vw, 1.05rem)", fontWeight: 400, color: kpi.value >= 0 ? "var(--text)" : "var(--red)", lineHeight: 1.2 }}>
+                      {kpi.isPercent ? formatPercent(kpi.value) : formatBRL(kpi.value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <div
