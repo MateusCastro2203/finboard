@@ -26,6 +26,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, profile, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!profile?.is_admin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function Spinner() {
   return (
     <div
@@ -59,7 +67,7 @@ export default function App() {
           element={<ProtectedRoute><Conta /></ProtectedRoute>}
         />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
         <Route path="/suporte" element={<Suporte />} />
         <Route path="/termos" element={<Termos />} />
         <Route path="/privacidade" element={<Privacidade />} />
