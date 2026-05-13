@@ -800,6 +800,114 @@ function buildFluxo(
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SHEET: Extrato Diário
+// ═══════════════════════════════════════════════════════════════
+
+const CATEGORIA_LABEL_XLSX: Record<string, string> = {
+  operacional_recebimento: "Recebimento Op.",
+  operacional_pagamento:   "Pagamento Op.",
+  investimento:            "Investimento",
+  financiamento_entrada:   "Financiamento +",
+  financiamento_saida:     "Financiamento −",
+};
+
+function buildExtrato(wb: Workbook, fluxoData: FluxoCaixa[]): void {
+  if (fluxoData.length === 0) return;
+
+  const ws = wb.addWorksheet("Extrato Diário", {
+    views: [{ state: "frozen", ySplit: 1 }],
+    properties: { tabColor: { argb: C.blueBg } },
+  });
+
+  ws.columns = [
+    { width: 13 }, // Data
+    { width: 32 }, // Descrição
+    { width: 10 }, // Tipo
+    { width: 22 }, // Categoria
+    { width: 16 }, // Valor
+    { width: 11 }, // Status
+    { width: 18 }, // Saldo Acumulado
+  ];
+
+  const hRow = ws.addRow(["Data", "Descrição", "Tipo", "Categoria", "Valor", "Status", "Saldo Acum."]);
+  hRow.height = 24;
+  (["primary", "primary", "primary", "primary", "gold", "muted", "blue"] as const).forEach((v, i) => {
+    applyHeaderStyle(ws.getCell(hRow.number, i + 1), v);
+  });
+
+  const sorted = [...fluxoData].sort((a, b) => a.data.localeCompare(b.data));
+  let saldo = 0;
+
+  sorted.forEach((l, i) => {
+    const isEntrada = l.tipo === "entrada";
+    if (l.realizado) saldo += isEntrada ? l.valor : -l.valor;
+
+    const r = ws.addRow([
+      l.data,
+      l.descricao || CATEGORIA_LABEL_XLSX[l.categoria] || l.categoria,
+      isEntrada ? "Entrada" : "Saída",
+      CATEGORIA_LABEL_XLSX[l.categoria] || l.categoria,
+      isEntrada ? l.valor : -l.valor,
+      l.realizado ? "Realizado" : "Previsto",
+      l.realizado ? saldo : null,
+    ]);
+
+    r.height = 20;
+    applyZebraRow(r, i % 2 === 0, 7);
+
+    r.getCell(1).font      = { name: F, size: 10, color: { argb: C.dimText } } as Font;
+    r.getCell(1).alignment = { horizontal: "center" };
+    r.getCell(2).font      = { name: F, size: 10, color: { argb: C.dimText } } as Font;
+    r.getCell(3).font      = { name: F, size: 10, bold: true, color: { argb: isEntrada ? C.greenText : C.redText } } as Font;
+    r.getCell(3).alignment = { horizontal: "center" };
+    r.getCell(4).font      = { name: F, size: 9, color: { argb: C.mutedText } } as Font;
+
+    const valCell = r.getCell(5);
+    valCell.numFmt    = '"R$"\\ #,##0.00';
+    valCell.font      = { name: F, size: 10, bold: true, color: { argb: isEntrada ? C.greenText : C.redText } } as Font;
+    valCell.alignment = { horizontal: "right" };
+
+    r.getCell(6).font      = { name: F, size: 9, color: { argb: l.realizado ? C.greenText : C.mutedText } } as Font;
+    r.getCell(6).alignment = { horizontal: "center" };
+
+    if (l.realizado) {
+      const sc = r.getCell(7);
+      sc.numFmt    = '"R$"\\ #,##0.00';
+      sc.font      = { name: F, size: 10, color: { argb: saldo >= 0 ? C.blueText : C.redText } } as Font;
+      sc.alignment = { horizontal: "right" };
+    }
+  });
+
+  // Totals
+  const realizados = sorted.filter(l => l.realizado);
+  const totalE = realizados.filter(l => l.tipo === "entrada").reduce((s, l) => s + l.valor, 0);
+  const totalS = realizados.filter(l => l.tipo === "saida").reduce((s, l) => s + l.valor, 0);
+  const net    = totalE - totalS;
+
+  addBlankRow(ws);
+  const totRow = ws.addRow(["TOTAL", null, null, null, net, "Realizados", saldo]);
+  totRow.height = 26;
+  for (let c = 1; c <= 7; c++) {
+    totRow.getCell(c).fill   = solid(C.hdrBg);
+    totRow.getCell(c).border = { top: { style: "medium", color: { argb: C.goldAccent } } };
+  }
+  totRow.getCell(1).font      = { name: F, bold: true, size: 10, color: { argb: C.white } } as Font;
+  totRow.getCell(1).alignment = { horizontal: "left", indent: 1 };
+  totRow.getCell(6).font      = { name: F, size: 9, color: { argb: C.mutedText } } as Font;
+  totRow.getCell(6).alignment = { horizontal: "center" };
+
+  for (const [col, val, argb] of [
+    [5, net,   net   >= 0 ? C.greenText : C.redText],
+    [7, saldo, saldo >= 0 ? C.blueText  : C.redText],
+  ] as [number, number, string][]) {
+    const c = totRow.getCell(col);
+    c.numFmt    = '"R$"\\ #,##0.00';
+    c.font      = { name: F, bold: true, size: 10, color: { argb } } as Font;
+    c.alignment = { horizontal: "right" };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // FUNÇÃO PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
@@ -830,6 +938,7 @@ export async function generateXLSX(
   buildDRE(wb, dreData);
   buildMargens(wb, dreData);
   buildFluxo(wb, monthly, totalE, totalS);
+  buildExtrato(wb, fluxoData);
 
   // auto-size após todas as sheets serem populadas
   wb.worksheets.forEach(ws => autoSizeColumns(ws));

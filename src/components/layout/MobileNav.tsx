@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BarChart3, ArrowLeftRight, Target, Presentation, PlusCircle, Settings } from "lucide-react";
+import { BarChart3, ArrowLeftRight, Target, Presentation, Wallet, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
   { tab: "dre",       icon: BarChart3,      label: "Resultado" },
@@ -41,12 +41,17 @@ export default function MobileNav({ activeTab, onTabChange }: {
         );
       })}
       <button
-        onClick={() => navigate("/dados")}
+        onClick={() => navigate("/caixa")}
         className="flex-1 flex flex-col items-center gap-1 py-2.5"
-        style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", letterSpacing: "0.03em", borderTop: "2px solid transparent" }}
+        style={{
+          color: activeTab === "caixa" ? "var(--gold)" : "var(--text-3)",
+          fontFamily: "'Outfit', sans-serif", fontSize: "0.7rem", letterSpacing: "0.03em",
+          borderTop: `2px solid ${activeTab === "caixa" ? "var(--gold)" : "transparent"}`,
+          background: activeTab === "caixa" ? "var(--gold-dim)" : "transparent",
+        }}
       >
-        <PlusCircle size={18} />
-        Dados
+        <Wallet size={18} />
+        Caixa
       </button>
       <button
         onClick={() => navigate("/conta")}

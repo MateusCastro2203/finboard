@@ -6,6 +6,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function maskMoney(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 13);
+  if (!digits) return "";
+  return (parseInt(digits, 10) / 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+export function parseMoney(masked: string): number {
+  return parseFloat(masked.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
 export function formatBRL(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -24,6 +37,14 @@ export function formatPeriodo(periodo: string): string {
   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                   "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   return `${months[parseInt(month) - 1]}/${year.slice(2)}`;
+}
+
+export function calcularAliquotaEfetivaMedia(periodos: DreCalculado[], meses = 6): number | null {
+  const recentes = periodos.slice(-meses).filter(p => p.receita_bruta > 0 && p.ir_csll > 0);
+  if (recentes.length < 3) return null;
+  const total_ir = recentes.reduce((s, p) => s + p.ir_csll, 0);
+  const total_rb = recentes.reduce((s, p) => s + p.receita_bruta, 0);
+  return total_ir / total_rb;
 }
 
 export function calcularDre(lancamentos: DreLancamento[]): DreCalculado[] {

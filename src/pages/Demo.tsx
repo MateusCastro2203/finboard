@@ -71,25 +71,25 @@ function gerarFluxoDemo(): FluxoCaixa[] {
       id: String(id++), company_id: "demo", data: `${m}-05`,
       tipo: "entrada", categoria: "operacional_recebimento",
       descricao: "Recebimentos de clientes", valor: Math.round(base * 0.95),
-      realizado: true,
+      realizado: true, recorrencia: null, recorrencia_grupo: null,
     });
     entries.push({
       id: String(id++), company_id: "demo", data: `${m}-10`,
       tipo: "saida", categoria: "operacional_pagamento",
       descricao: "Pagamento fornecedores", valor: Math.round(base * 0.38),
-      realizado: true,
+      realizado: true, recorrencia: null, recorrencia_grupo: null,
     });
     entries.push({
       id: String(id++), company_id: "demo", data: `${m}-15`,
       tipo: "saida", categoria: "operacional_pagamento",
       descricao: "Despesas de pessoal", valor: Math.round(base * 0.28),
-      realizado: true,
+      realizado: true, recorrencia: null, recorrencia_grupo: null,
     });
     entries.push({
       id: String(id++), company_id: "demo", data: `${m}-20`,
       tipo: "saida", categoria: "operacional_pagamento",
       descricao: "Despesas operacionais", valor: Math.round(base * 0.18),
-      realizado: true,
+      realizado: true, recorrencia: null, recorrencia_grupo: null,
     });
   }
   return entries;

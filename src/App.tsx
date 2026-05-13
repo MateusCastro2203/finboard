@@ -10,6 +10,7 @@ import PaymentPending from "./pages/PaymentPending";
 import Checkout from "./pages/Checkout";
 import Demo from "./pages/Demo";
 import Conta from "./pages/Conta";
+import CaixaDiario from "./pages/CaixaDiario";
 import Admin from "./pages/Admin";
 import Suporte from "./pages/Suporte";
 import ResetPassword from "./pages/ResetPassword";
@@ -60,6 +61,10 @@ export default function App() {
         <Route
           path="/dados"
           element={<ProtectedRoute><DataEntry /></ProtectedRoute>}
+        />
+        <Route
+          path="/caixa"
+          element={<ProtectedRoute><CaixaDiario /></ProtectedRoute>}
         />
         <Route path="/demo" element={<Demo />} />
         <Route

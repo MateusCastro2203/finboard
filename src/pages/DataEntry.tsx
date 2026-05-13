@@ -6,7 +6,8 @@ import { useFinancialData } from "../hooks/useFinancialData";
 import CSVImport from "../components/CSVImport";
 import CSVFluxoImport from "../components/CSVFluxoImport";
 import OFXImport from "../components/OFXImport";
-import { ArrowLeft, Save, Building2, Upload, PenLine, TrendingUp, Copy } from "lucide-react";
+import { ArrowLeft, Save, Building2, Upload, PenLine, TrendingUp, Copy, Lightbulb } from "lucide-react";
+import { calcularAliquotaEfetivaMedia, formatBRL, maskMoney, parseMoney } from "../lib/utils";
 
 const DRE_FIELDS = [
   { key: "receita_bruta",             label: "Receita Bruta",                          hint: "Total faturado antes de descontos e impostos" },
@@ -17,8 +18,16 @@ const DRE_FIELDS = [
   { key: "despesas_pessoal",          label: "Folha de pagamento",                     hint: "Salários, encargos, benefícios de todos os funcionários" },
   { key: "outras_despesas_op",        label: "Outras despesas",                        hint: "Despesas que não se encaixam nos itens anteriores" },
   { key: "depreciacao",               label: "Depreciação de equipamentos",            hint: "Desgaste de máquinas, veículos, móveis — pergunte ao contador" },
-  { key: "resultado_financeiro",      label: "Resultado financeiro",                   hint: "Juros recebidos menos juros pagos. Use número negativo se paga mais juros do que recebe" },
+  { key: "resultado_financeiro",      label: "Resultado financeiro",                   hint: "Juros recebidos menos juros pagos. Use valor negativo (ex: -1.500,00) se paga mais juros do que recebe" },
   { key: "ir_csll",                   label: "Imposto de Renda + CSLL",               hint: "IR e Contribuição Social sobre o Lucro — pergunte ao contador" },
+] as const;
+
+// Grupos de campos DRE para separação visual por seção
+const DRE_GRUPOS = [
+  { titulo: "Receitas",               fields: ["receita_bruta", "deducoes"] as const },
+  { titulo: "Custos",                 fields: ["cmv"] as const },
+  { titulo: "Despesas operacionais",  fields: ["despesas_comerciais", "despesas_administrativas", "despesas_pessoal", "outras_despesas_op"] as const },
+  { titulo: "Resultado",              fields: ["depreciacao", "resultado_financeiro", "ir_csll"] as const },
 ] as const;
 
 const FLUXO_FIELDS = [
@@ -28,6 +37,12 @@ const FLUXO_FIELDS = [
   { key: "financiamento_entrada",   tipo: "entrada" as const, label: "Entradas de financiamento",         hint: "Novos empréstimos ou aporte de capital recebido" },
   { key: "financiamento_saida",     tipo: "saida"  as const, label: "Saídas de financiamento",            hint: "Pagamento de parcelas de empréstimos ou distribuição de lucros" },
 ] as const;
+
+// Índice de campos DRE para lookup rápido a partir da key
+const DRE_FIELDS_MAP = Object.fromEntries(DRE_FIELDS.map((f) => [f.key, f])) as Record<
+  (typeof DRE_FIELDS)[number]["key"],
+  (typeof DRE_FIELDS)[number]
+>;
 
 function monthsRange(n = 12) {
   const months = [];
@@ -55,10 +70,27 @@ const inputCls: React.CSSProperties = {
   transition: "border-color 0.15s",
 };
 
-function parseBRL(v: string): number {
-  // Handles both "1500.00" and "1.500,00" formats
-  const cleaned = v.replace(/\./g, "").replace(",", ".");
-  return parseFloat(cleaned) || 0;
+/**
+ * Formata um número como string no formato pt-BR com 2 casas decimais.
+ * Usado para exibir valores carregados do banco nos inputs.
+ */
+function formatValueForInput(value: number): string {
+  if (value === 0) return "";
+  return Math.abs(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Aplica máscara de dinheiro preservando sinal negativo.
+ * Utilizado exclusivamente no campo resultado_financeiro que aceita valores negativos.
+ */
+function maskMoneyWithSign(raw: string): string {
+  const isNegative = raw.startsWith("-");
+  const masked = maskMoney(raw);
+  if (!masked) return isNegative ? "-" : "";
+  return isNegative ? `-${masked}` : masked;
 }
 
 function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement> & { prefix?: string }) {
@@ -89,9 +121,10 @@ function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement> & { prefix
 
 export default function DataEntry() {
   const { user } = useAuth();
-  const { company, reload } = useFinancialData(user?.id);
+  const { company, dreData, reload } = useFinancialData(user?.id);
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"csv" | "manual" | "fluxo">("csv");
+  // "manual" é o padrão — maioria dos usuários chega querendo digitar manualmente
+  const [tab, setTab] = useState<"csv" | "manual" | "fluxo">("manual");
   const [csvType, setCsvType] = useState<"dre" | "fluxo" | "ofx">("dre");
   const [periodo, setPeriodo] = useState(monthsRange(12)[11].value);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -132,9 +165,15 @@ export default function DataEntry() {
       .select("categoria, valor")
       .eq("company_id", companyId)
       .eq("periodo", p);
+
     const vals: Record<string, string> = {};
     for (const row of data ?? []) {
-      vals[row.categoria] = String((parseFloat(vals[row.categoria] ?? "0")) + row.valor);
+      const prev = parseFloat(vals[row.categoria] ?? "0");
+      const total = prev + row.valor;
+      vals[row.categoria] = total < 0
+        // Resultado financeiro pode ser negativo — preserva sinal
+        ? `-${formatValueForInput(total)}`
+        : formatValueForInput(total);
     }
     setValues(vals);
   }
@@ -147,10 +186,12 @@ export default function DataEntry() {
       .eq("company_id", companyId)
       .gte("data", `${ym}-01`)
       .lte("data", `${ym}-31`);
+
     const vals: Record<string, string> = {};
     for (const row of data ?? []) {
       if (!vals[row.categoria]) vals[row.categoria] = "0";
-      vals[row.categoria] = String(parseFloat(vals[row.categoria]) + row.valor);
+      const total = parseFloat(vals[row.categoria]) + row.valor;
+      vals[row.categoria] = formatValueForInput(total);
     }
     setFluxoValues(vals);
   }
@@ -182,7 +223,7 @@ export default function DataEntry() {
           company_id: coId,
           periodo,
           categoria: f.key,
-          valor: parseBRL(values[f.key]),
+          valor: parseMoney(values[f.key]),
         }));
 
       if (rows.length === 0) { setError("Preencha pelo menos um campo."); setSaving(false); return; }
@@ -199,8 +240,8 @@ export default function DataEntry() {
       await reload();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar dados.");
     } finally {
       setSaving(false);
     }
@@ -232,7 +273,7 @@ export default function DataEntry() {
           tipo: f.tipo,
           categoria: f.key,
           descricao: f.label,
-          valor: parseBRL(fluxoValues[f.key]),
+          valor: parseMoney(fluxoValues[f.key]),
           realizado: true,
         }));
 
@@ -244,12 +285,24 @@ export default function DataEntry() {
       await reload();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar fluxo de caixa.");
     } finally {
       setSaving(false);
     }
   }
+
+  // Contador de progresso: quantos dos 10 campos DRE estão preenchidos
+  const dreFieldsTotal = DRE_FIELDS.length;
+  const dreFieldsPreenchidos = DRE_FIELDS.filter(
+    (f) => values[f.key] !== undefined && values[f.key] !== "" && values[f.key] !== "-"
+  ).length;
+
+  // Contador de progresso para fluxo de caixa
+  const fluxoFieldsTotal = FLUXO_FIELDS.length;
+  const fluxoFieldsPreenchidos = FLUXO_FIELDS.filter(
+    (f) => fluxoValues[f.key] !== undefined && fluxoValues[f.key] !== ""
+  ).length;
 
   return (
     <div
@@ -276,7 +329,7 @@ export default function DataEntry() {
               Inserir dados da empresa
             </h1>
             <p className="text-sm mt-0.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-              Importe pelo CSV ou preencha manualmente mês a mês
+              Preencha manualmente ou importe pelo CSV mês a mês
             </p>
           </div>
         </div>
@@ -308,9 +361,9 @@ export default function DataEntry() {
           style={{ background: "var(--bg-card)" }}
         >
           {([
-            { id: "csv",    icon: <Upload className="w-4 h-4" />,     label: "CSV",          labelFull: "Importar CSV",   badge: "Recomendado" },
             { id: "manual", icon: <PenLine className="w-4 h-4" />,    label: "DRE",          labelFull: "DRE manual",     badge: null },
             { id: "fluxo",  icon: <TrendingUp className="w-4 h-4" />, label: "Fluxo",        labelFull: "Fluxo de Caixa", badge: null },
+            { id: "csv",    icon: <Upload className="w-4 h-4" />,     label: "CSV",          labelFull: "Importar CSV",   badge: null },
           ] as const).map((t) => (
             <button
               key={t.id}
@@ -429,35 +482,150 @@ export default function DataEntry() {
               </div>
             </div>
 
-            <h2
-              className="text-sm font-medium mb-1"
-              style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
-            >
-              Valores do mês (em R$)
-            </h2>
-            <p className="text-xs mb-6" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-              Não sabe algum valor? Deixe em branco — você pode completar depois.
-            </p>
+            {/* Cabeçalho + barra de progresso */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2
+                  className="text-sm font-medium"
+                  style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
+                >
+                  Valores do mês (em R$)
+                </h2>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
+                >
+                  {dreFieldsPreenchidos} de {dreFieldsTotal} campos preenchidos
+                </span>
+              </div>
+              {/* Barra de progresso */}
+              <div
+                style={{
+                  height: 3,
+                  background: "var(--bg-card-2)",
+                  borderRadius: 9999,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(dreFieldsPreenchidos / dreFieldsTotal) * 100}%`,
+                    background: "var(--gold)",
+                    borderRadius: 9999,
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              <p className="text-xs mt-2" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Não sabe algum valor? Deixe em branco — você pode completar depois.
+              </p>
+            </div>
 
-            <div className="flex flex-col gap-5">
-              {DRE_FIELDS.map((field) => (
-                <div key={field.key}>
-                  <label
-                    className="block text-sm font-medium mb-0.5"
-                    style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
+            {/* Campos DRE agrupados por seção */}
+            <div className="flex flex-col gap-0">
+              {DRE_GRUPOS.map((grupo, grupoIdx) => (
+                <div key={grupo.titulo}>
+                  {/* Separador entre grupos (não aparece antes do primeiro) */}
+                  {grupoIdx > 0 && (
+                    <div
+                      style={{
+                        height: 1,
+                        background: "var(--border)",
+                        margin: "20px 0 16px",
+                      }}
+                    />
+                  )}
+
+                  {/* Cabeçalho do grupo */}
+                  <h3
+                    style={{
+                      fontSize: "0.65rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      color: "var(--text-3)",
+                      fontFamily: "'Outfit', sans-serif",
+                      fontWeight: 500,
+                      marginBottom: 12,
+                    }}
                   >
-                    {field.label}
-                  </label>
-                  <p className="text-xs mb-1.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-                    {field.hint}
-                  </p>
-                  <DarkInput
-                    type="text"
-                    value={values[field.key] ?? ""}
-                    onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                    placeholder="0,00"
-                    prefix="R$"
-                  />
+                    {grupo.titulo}
+                  </h3>
+
+                  {/* Campos do grupo */}
+                  <div className="flex flex-col gap-5">
+                    {grupo.fields.map((fieldKey) => {
+                      const field = DRE_FIELDS_MAP[fieldKey];
+                      const periodoSelecionado = periodo.slice(0, 7);
+                      const historico = dreData.filter((p) => p.periodo < periodoSelecionado);
+                      const aliquota = field.key === "ir_csll"
+                        ? calcularAliquotaEfetivaMedia(historico)
+                        : null;
+                      const rbAtual = parseMoney(values["receita_bruta"] ?? "0");
+                      const sugestaoValor = aliquota && rbAtual > 0 ? aliquota * rbAtual : null;
+                      const isResultadoFinanceiro = field.key === "resultado_financeiro";
+
+                      return (
+                        <div key={field.key}>
+                          <label
+                            className="block text-sm font-medium mb-0.5"
+                            style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
+                          >
+                            {field.label}
+                          </label>
+                          <p className="text-xs mb-1.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                            {field.hint}
+                          </p>
+                          <DarkInput
+                            type="text"
+                            value={values[field.key] ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const masked = isResultadoFinanceiro
+                                ? maskMoneyWithSign(raw)
+                                : maskMoney(raw);
+                              setValues((prev) => ({ ...prev, [field.key]: masked }));
+                            }}
+                            placeholder={isResultadoFinanceiro ? "0,00 ou -1.500,00" : "0,00"}
+                            prefix="R$"
+                          />
+                          {sugestaoValor && (
+                            <div
+                              className="flex items-center justify-between mt-1.5 px-2.5 py-1.5 rounded"
+                              style={{ background: "var(--gold-dim)", border: "1px solid rgba(200,145,42,0.18)" }}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <Lightbulb className="w-3 h-3 flex-shrink-0" style={{ color: "var(--gold)" }} />
+                                <span className="text-xs" style={{ color: "var(--text-2)", fontFamily: "'Outfit', sans-serif" }}>
+                                  Sugestão pelo histórico:{" "}
+                                  <strong style={{ color: "var(--text)" }}>{formatBRL(sugestaoValor)}</strong>
+                                  <span style={{ color: "var(--text-3)" }}> ({(aliquota! * 100).toFixed(1)}% da rec. bruta)</span>
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setValues((prev) => ({
+                                    ...prev,
+                                    ir_csll: maskMoney(sugestaoValor.toFixed(2)),
+                                  }))
+                                }
+                                className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+                                style={{
+                                  background: "rgba(200,145,42,0.15)",
+                                  color: "var(--gold)",
+                                  border: "1px solid rgba(200,145,42,0.3)",
+                                  fontFamily: "'Outfit', sans-serif",
+                                }}
+                              >
+                                Usar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
@@ -475,7 +643,7 @@ export default function DataEntry() {
                 className="text-xs px-4 py-3 rounded mt-5"
                 style={{ color: "var(--green)", background: "var(--green-dim)", fontFamily: "'Outfit', sans-serif" }}
               >
-                ✓ Dados salvos com sucesso.
+                Dados salvos com sucesso.
               </p>
             )}
 
@@ -498,6 +666,7 @@ export default function DataEntry() {
             </div>
           </div>
         )}
+
         {/* Fluxo de Caixa tab */}
         {tab === "fluxo" && (
           <div
@@ -548,15 +717,45 @@ export default function DataEntry() {
               </div>
             </div>
 
-            <h2
-              className="text-sm font-medium mb-1"
-              style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
-            >
-              Movimentações do mês (em R$)
-            </h2>
-            <p className="text-xs mb-6" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
-              Informe os totais mensais por categoria. Não sabe algum? Deixe em branco.
-            </p>
+            {/* Cabeçalho + barra de progresso */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2
+                  className="text-sm font-medium"
+                  style={{ color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}
+                >
+                  Movimentações do mês (em R$)
+                </h2>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}
+                >
+                  {fluxoFieldsPreenchidos} de {fluxoFieldsTotal} campos preenchidos
+                </span>
+              </div>
+              {/* Barra de progresso */}
+              <div
+                style={{
+                  height: 3,
+                  background: "var(--bg-card-2)",
+                  borderRadius: 9999,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(fluxoFieldsPreenchidos / fluxoFieldsTotal) * 100}%`,
+                    background: "var(--gold)",
+                    borderRadius: 9999,
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              <p className="text-xs mt-2" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                Informe os totais mensais por categoria. Não sabe algum? Deixe em branco.
+              </p>
+            </div>
 
             <div className="flex flex-col gap-5">
               {FLUXO_FIELDS.map((field) => (
@@ -583,10 +782,12 @@ export default function DataEntry() {
                     {field.hint}
                   </p>
                   <DarkInput
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={fluxoValues[field.key] ?? ""}
-                    onChange={(e) => setFluxoValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    onChange={(e) => {
+                      const masked = maskMoney(e.target.value);
+                      setFluxoValues((prev) => ({ ...prev, [field.key]: masked }));
+                    }}
                     placeholder="0,00"
                     prefix="R$"
                   />
@@ -601,7 +802,7 @@ export default function DataEntry() {
             )}
             {success && (
               <p className="text-xs px-4 py-3 rounded mt-5" style={{ color: "var(--green)", background: "var(--green-dim)", fontFamily: "'Outfit', sans-serif" }}>
-                ✓ Fluxo de caixa salvo com sucesso.
+                Fluxo de caixa salvo com sucesso.
               </p>
             )}
 

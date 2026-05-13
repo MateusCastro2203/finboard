@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, LogOut, Target, Settings, HelpCircle, CalendarRange } from "lucide-react";
+import { BarChart3, TrendingUp, ArrowLeftRight, Presentation, LogOut, Target, Settings, HelpCircle, CalendarRange, Wallet } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 const ANALISES = [
@@ -124,6 +124,17 @@ export default function Sidebar({ activeTab, onTabChange, isDemo = false, onOpen
             ))}
           </div>
         </div>
+
+        {!isDemo && (
+          <div className="mt-3" style={{ borderTop: "1px solid var(--border-soft)" }}>
+            {sectionLabel("Operacional")}
+            <NavBtn
+              tab="caixa" icon={Wallet} label="Caixa Diário"
+              active={activeTab === "caixa"}
+              onClick={() => navigate("/caixa")}
+            />
+          </div>
+        )}
 
         {!isDemo && (
           <div className="pt-3 mt-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid var(--border-soft)" }}>
