@@ -34,6 +34,7 @@ export interface Company {
   cnpj: string | null;
   segmento: string | null;
   moeda: string;
+  saldo_inicial: number | null;
   created_at: string;
 }
 
@@ -55,6 +56,8 @@ export interface FluxoCaixa {
   descricao: string;
   valor: number;
   realizado: boolean;
+  recorrencia: "semanal" | "mensal" | null;
+  recorrencia_grupo: string | null;
 }
 
 export interface DreCalculado {

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { maskMoney, parseMoney } from "../lib/utils";
 import { useAuth } from "../hooks/useAuth";
 import type { Company } from "../types";
-import { ArrowLeft, Save, Building2, User, CheckCircle2, AlertCircle, Bell } from "lucide-react";
+import { ArrowLeft, Save, Building2, User, CheckCircle2, AlertCircle, Bell, Wallet } from "lucide-react";
 
 const inputCls: React.CSSProperties = {
   width: "100%",
@@ -84,6 +85,7 @@ export default function Conta() {
   const [cnpj, setCnpj]                     = useState("");
   const [segmento, setSegmento]             = useState("");
   const [moeda, setMoeda]                   = useState("BRL");
+  const [saldoInicial, setSaldoInicial]     = useState("");
 
   // Profile fields
   const [fullName, setFullName]             = useState("");
@@ -108,6 +110,11 @@ export default function Conta() {
           setCnpj(co.cnpj ?? "");
           setSegmento(co.segmento ?? "");
           setMoeda(co.moeda ?? "BRL");
+          setSaldoInicial(
+            co.saldo_inicial != null
+              ? co.saldo_inicial.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+              : ""
+          );
         }
         setLoadingCompany(false);
       });
@@ -143,6 +150,7 @@ export default function Conta() {
             cnpj: cnpj.replace(/\D/g, "") || null,
             segmento: segmento.trim() || null,
             moeda,
+            saldo_inicial: saldoInicial !== "" ? parseMoney(saldoInicial) : null,
           })
           .eq("id", company.id);
         if (coErr) throw coErr;
@@ -344,6 +352,25 @@ export default function Conta() {
               </button>
             </div>
           </SectionCard>
+
+          {/* Caixa Diário */}
+          {!loadingCompany && company && (
+            <SectionCard icon={Wallet} title="Caixa Diário">
+              <div>
+                <label style={labelCls}>Saldo inicial (R$)</label>
+                <StyledInput
+                  type="text"
+                  inputMode="numeric"
+                  value={saldoInicial}
+                  onChange={(e) => setSaldoInicial(maskMoney(e.target.value))}
+                  placeholder="0,00"
+                />
+                <p className="text-xs mt-1.5" style={{ color: "var(--text-3)", fontFamily: "'Outfit', sans-serif" }}>
+                  Saldo que havia em caixa antes de começar a usar este módulo. Usado como base no Caixa Diário.
+                </p>
+              </div>
+            </SectionCard>
+          )}
 
           {/* Feedback */}
           {error && (

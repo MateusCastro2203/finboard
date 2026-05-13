@@ -21,6 +21,7 @@ import AnotacaoCard from "../components/AnotacaoCard";
 import { PlusCircle, AlertTriangle, RefreshCw, Download } from "lucide-react";
 import ExportModal from "../components/export/ExportModal";
 import SupportModal from "../components/SupportModal";
+import CaixaWidget from "../components/CaixaWidget";
 
 const tabTitles: Record<string, string> = {
   dre:       "Resultado do Mês",
@@ -159,6 +160,7 @@ export default function Dashboard() {
           <>
             {activeTab === "dre" && (
               <>
+                <CaixaWidget fluxoData={fluxoData} />
                 <DREChart data={dreData} fluxoData={fluxoData} onTabChange={handleTabChange} />
                 {lastPeriodo && (
                   <div className="mt-4">
